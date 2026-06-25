@@ -657,6 +657,16 @@ if data_loaded:
         stats = st.session_state.run_stats
         df = st.session_state.scored_df
         
+        # Download Shortlist Button
+        csv_data = df[["candidate_id", "rank", "score", "reasoning"]].to_csv(index=False).encode("utf-8")
+        st.download_button(
+            label="📥 Download Shortlist Submission CSV",
+            data=csv_data,
+            file_name="submission.csv",
+            mime="text/csv",
+            use_container_width=True,
+        )
+        
         # Dashboard KPIs
         st.markdown(
             f"""
