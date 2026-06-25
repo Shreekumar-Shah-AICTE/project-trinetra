@@ -256,6 +256,23 @@ def run_pipeline(
     
     timings["total"] = time.time() - start_total
     
+    # ── Save to Local DB (5-Table System Audit) ──
+    try:
+        from src.database import save_pipeline_run
+        dataset_name = os.path.basename(candidates_path)
+        save_pipeline_run(
+            candidates=candidates,
+            guard_results=guard_results,
+            scored_candidates=scored_candidates,
+            fused_ranking=fused_ranking,
+            output_rows=output_rows,
+            duration=timings["total"],
+            dataset_name=dataset_name,
+        )
+        print("    🗄 Run saved to SQLite database (trinetra.db)")
+    except Exception as e:
+        print(f"    ⚠ Failed to save run to SQLite: {str(e)}")
+        
     # ── Debug output ──
     if debug_json:
         debug_data = []
