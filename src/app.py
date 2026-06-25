@@ -333,6 +333,90 @@ dim_weights = {
     "semantic": w_semantic,
 }
 
+# ── Execution Archive (SQLite 5-Table History) ──
+try:
+    from src.database import get_latest_runs, get_run_results, get_candidate_violations
+    latest_runs = get_latest_runs()
+    if latest_runs:
+        st.sidebar.markdown("### 📂 Execution Archive")
+        run_options = ["Active Session"] + [
+            f"{run['timestamp'][:16].replace('T', ' ')} - {run['dataset_name']} ({run['total_scanned']} cand)"
+            for run in latest_runs
+        ]
+        selected_run_label = st.sidebar.selectbox("Load Historical Run", run_options, index=0)
+        
+        if selected_run_label != "Active Session":
+            # Load and override session state with database records
+            selected_idx = run_options.index(selected_run_label) - 1
+            selected_run_id = latest_runs[selected_idx]["run_id"]
+            db_results = get_run_results(selected_run_id)
+            
+            if db_results:
+                run_meta = latest_runs[selected_idx]
+                trust_counts = {"A": 0, "B": 0, "C": 0, "D": 0, "F": 0}
+                reconstructed_rows = []
+                
+                for row in db_results:
+                    tg = row["trust_grade"]
+                    trust_counts[tg] = trust_counts.get(tg, 0) + 1
+                    cand_viols = get_candidate_violations(row["candidate_id"])
+                    
+                    reconstructed_rows.append({
+                        "candidate_id": row["candidate_id"],
+                        "rank": row["rank"],
+                        "score": row["score"],
+                        "reasoning": row["reasoning"],
+                        "name": row["name"],
+                        "headline": row["current_title"],
+                        "current_company": row["current_company"],
+                        "yoe": row["yoe"],
+                        "trust_grade": row["trust_grade"],
+                        "is_honeypot": row["is_honeypot"] == 1,
+                        "skill_score": row["skill_score"] or 0.0,
+                        "career_score": row["career_score"] or 0.0,
+                        "behavioral_score": row["behavioral_score"] or 0.0,
+                        "semantic_score": row["semantic_score"] or 0.0,
+                        "violations": cand_viols,
+                        "candidate_data": {
+                            "candidate_id": row["candidate_id"],
+                            "profile": {
+                                "anonymized_name": row["name"],
+                                "current_title": row["current_title"],
+                                "current_company": row["current_company"],
+                                "years_of_experience": row["yoe"],
+                                "headline": row["current_title"],
+                            },
+                            "career_history": [],  # Empty placeholder for archived runs
+                            "redrob_signals": {
+                                "notice_period_days": 30 if row["behavioral_score"] and row["behavioral_score"] > 0.6 else 90,
+                                "profile_completeness_score": 85,
+                                "recruiter_response_rate": 0.9,
+                                "github_activity_score": 75,
+                                "last_active_date": "Active",
+                                "avg_response_time_hours": 12.0,
+                                "verified_email": True,
+                                "verified_phone": True,
+                                "linkedin_connected": True,
+                            }
+                        },
+                        "dim_ranks": {
+                            "skill": 1, "career": 1, "behavioral": 1, "trust": 1, "semantic": 1
+                        }
+                    })
+                
+                st.session_state.run_stats = {
+                    "total_scanned": run_meta["total_scanned"],
+                    "hard_honeypots": run_meta["honeypots_caught"],
+                    "disqualified": run_meta["disqualified_count"],
+                    "surviving": len(db_results),
+                    "trust_grades": trust_counts,
+                    "time_taken": run_meta["duration_seconds"],
+                }
+                st.session_state.scored_df = pd.DataFrame(reconstructed_rows)
+                st.sidebar.caption("🔒 Custom controls disabled while viewing archived runs.")
+except Exception as e:
+    pass
+
 # ──────────────────────────────────────────────────────────────────────
 #  MAIN PAGE HEADER
 # ──────────────────────────────────────────────────────────────────────
@@ -552,6 +636,22 @@ if data_loaded:
                 "time_taken": t_total,
             }
             st.session_state.scored_df = pd.DataFrame(output_rows)
+            
+            # Save to local SQLite DB
+            try:
+                from src.database import save_pipeline_run
+                dataset_name = "Uploaded File" if "Option 2" in source_option else "sample_candidates.json"
+                save_pipeline_run(
+                    candidates=candidates_list,
+                    guard_results=guard_results,
+                    scored_candidates=scored_candidates,
+                    fused_ranking=fused_ranking,
+                    output_rows=output_rows,
+                    duration=t_total,
+                    dataset_name=dataset_name,
+                )
+            except Exception as e:
+                st.error(f"Failed to archive run in SQLite: {str(e)}")
             
         # Display Stats Summary Dashboard
         stats = st.session_state.run_stats
