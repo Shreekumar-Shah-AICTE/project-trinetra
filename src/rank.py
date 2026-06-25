@@ -37,6 +37,7 @@ from src.rankers import (
 )
 from src.fusion import build_dimension_ranks, reciprocal_rank_fusion
 from src.reasoning import build_reasoning
+from src.semantic import compute_semantic_scores
 
 
 def print_banner():
@@ -56,6 +57,7 @@ def run_pipeline(
     profile_runtime: bool = False,
     k: int = 60,
     fast: bool = False,
+    no_semantic: bool = False,
 ) -> dict:
     """
     Execute the full Trinetra pipeline.
@@ -151,7 +153,29 @@ def run_pipeline(
         })
     
     timings["scoring"] = time.time() - t2
-    print(f"    📊 Scored {len(scored_candidates):,} candidates across 4 dimensions")
+    print(f"    ... Scored {len(scored_candidates):,} candidates across 4 dimensions")
+    
+    # ── SEMANTIC LAYER (5th dimension) ──
+    if not no_semantic:
+        print("  > Stage 2b: TF-IDF semantic scoring...")
+        t2b = time.time()
+        
+        # Collect texts and IDs for batch TF-IDF
+        sem_texts = [sc["text_fields"]["full_text"] for sc in scored_candidates]
+        sem_ids = [sc["candidate_id"] for sc in scored_candidates]
+        
+        semantic_scores = compute_semantic_scores(sem_texts, sem_ids)
+        
+        # Inject semantic scores into scored candidates
+        for sc in scored_candidates:
+            sc["semantic_score"] = semantic_scores.get(sc["candidate_id"], 0.0)
+        
+        timings["semantic"] = time.time() - t2b
+        print(f"    ... TF-IDF semantic scores computed in {timings['semantic']:.1f}s")
+    else:
+        for sc in scored_candidates:
+            sc["semantic_score"] = 0.0
+        print("  > Semantic layer: DISABLED")
     
     # ═══════════════════════════════════════════════════════════════════
     #  STAGE 3: RRF FUSION (Eye 3 — Wisdom)
@@ -353,6 +377,10 @@ def main():
         "--fast", action="store_true",
         help="Fast mode (skip some checks for slower machines)"
     )
+    parser.add_argument(
+        "--no-semantic", action="store_true",
+        help="Disable TF-IDF semantic layer"
+    )
     
     args = parser.parse_args()
     
@@ -366,6 +394,7 @@ def main():
         profile_runtime=args.profile_runtime,
         k=args.k,
         fast=args.fast,
+        no_semantic=getattr(args, 'no_semantic', False),
     )
     
     return stats

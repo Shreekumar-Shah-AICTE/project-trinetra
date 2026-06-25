@@ -40,6 +40,7 @@ def reciprocal_rank_fusion(
             "career": 1.0,
             "behavioral": 0.8,
             "trust": 1.2,  # Trust gets slight boost — our core differentiator
+            "semantic": 0.6,  # Supplementary — catches natural language matches
         }
     
     rrf_scores: dict[str, float] = {}
@@ -82,6 +83,7 @@ def build_dimension_ranks(
         "career": "career_score",
         "behavioral": "behavioral_score",
         "trust": "trust_rank_score",
+        "semantic": "semantic_score",
     }
     
     candidate_ranks: dict[str, dict[str, int]] = {}
