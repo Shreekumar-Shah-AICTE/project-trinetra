@@ -264,12 +264,17 @@ def check_keyword_stuffer(candidate: dict) -> dict:
     result["non_ai_headline"] = any(pat in headline for pat in NON_AI_HEADLINE_PATTERNS)
     
     # Check if career descriptions mention AI/ML work
+    import re
+    ai_career_patterns = [
+        r'\bmachine learning\b', r'\bartificial intelligence\b', r'\bml\b', 
+        r'\bnlp\b', r'\bdeep learning\b', r'\bembedding\b', r'\bretrieval\b', 
+        r'\bsearch\b', r'\branking\b', r'\bdata science\b', r'\b(?:^|\s)ai(?:\s|$|\b)',
+    ]
     for job in career:
         desc = job.get("description", "").lower()
         title = job.get("title", "").lower()
         combined = desc + " " + title
-        if any(kw in combined for kw in ["machine learning", "ai", "ml", "nlp", "deep learning",
-                                          "embedding", "retrieval", "search", "ranking", "data science"]):
+        if any(re.search(pat, combined) for pat in ai_career_patterns):
             result["has_ai_career"] = True
             break
     
@@ -400,23 +405,26 @@ def run_guard_gate(candidate: dict) -> dict:
         all_violations.append(edu_exp_info["reason"])
     
     # ── Determine Trust Grade ──
-    # Hard honeypot: 2+ chronological violations OR fictional company OR extreme empty expertise
+    # Hard honeypot: ONLY chronological impossibilities or extreme expertise fraud
+    # NOTE: Fictional companies are sprinkled as noise across ~80% of the dataset,
+    # so they are a SOFT penalty, not a hard honeypot trigger.
+    fictional_company_count = len(company_info["fictional_companies"])
     is_hard_honeypot = (
         len(chrono_violations) >= 2
-        or company_info["has_fictional"]
         or (expertise_info["expert_zero_count"] >= 8)
         or (len(chrono_violations) >= 1 and expertise_info["is_suspicious"])
+        or (len(chrono_violations) >= 1 and fictional_company_count >= 2)
     )
     
     # Calculate trust score (0.0 = untrusted, 1.0 = fully trusted)
     trust_score = 1.0
     
-    # Chronological violations: -0.20 each
-    trust_score -= len(chrono_violations) * 0.20
+    # Chronological violations: -0.25 each
+    trust_score -= len(chrono_violations) * 0.25
     
-    # Fictional company: -0.50
+    # Fictional company: soft penalty, -0.08 per fictional company (they're common noise)
     if company_info["has_fictional"]:
-        trust_score -= 0.50
+        trust_score -= min(fictional_company_count * 0.08, 0.30)
     
     # Services-only career: -0.15 (mild penalty, not disqualifying by itself)
     if company_info["services_only"]:
