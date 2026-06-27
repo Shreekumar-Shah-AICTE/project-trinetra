@@ -130,11 +130,6 @@ def _is_honeypot(candidate: dict) -> bool:
     skills = candidate.get("skills", [])
     ref_year = 2026
 
-    # HARD DISQUALIFIER: Fictional Companies (Immediate Honeypot)
-    for job in career:
-        company = (job.get("company") or "").lower().strip()
-        if company in FICTIONAL_COMPANIES:
-            return True
 
     # Check for impossible skill durations (time-traveling skills)
     for skill in skills:

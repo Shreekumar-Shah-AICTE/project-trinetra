@@ -164,6 +164,7 @@ def check_company_authenticity(candidate: dict) -> dict:
         
         if company_lower in FICTIONAL_COMPANIES:
             result["fictional_companies"].append(company)
+            result["product_companies"].append(company)  # Fictional tech companies are valid product companies in this synthetic dataset
         elif company_lower in SERVICES_COMPANIES:
             result["services_companies"].append(company)
         elif company_lower in PRODUCT_COMPANIES:
@@ -489,10 +490,9 @@ def run_guard_gate(candidate: dict) -> dict:
         len(chrono_violations) >= 2
         or (expertise_info["expert_zero_count"] >= 8)
         or (len(chrono_violations) >= 1 and expertise_info["is_suspicious"])
-        or (len(chrono_violations) >= 1 and fictional_company_count >= 2)
         or has_time_travel_fraud
     )
-    is_synthetic_noise = fictional_company_count >= 1 and not is_hard_honeypot
+    is_synthetic_noise = False
     
     # Calculate trust score (0.0 = untrusted, 1.0 = fully trusted)
     trust_score = 1.0
@@ -500,9 +500,9 @@ def run_guard_gate(candidate: dict) -> dict:
     # Chronological violations: -0.25 each
     trust_score -= len(chrono_violations) * 0.25
     
-    # Fictional company: soft penalty, -0.08 per fictional company (they're common noise)
-    if company_info["has_fictional"]:
-        trust_score -= min(fictional_company_count * 0.08, 0.30)
+    # Fictional company: Treated as valid synthetic product companies, no penalty
+    # if company_info["has_fictional"]:
+    #     trust_score -= min(fictional_company_count * 0.08, 0.30)
     
     # Services-only career: -0.15 (mild penalty, not disqualifying by itself)
     if company_info["services_only"]:
@@ -547,12 +547,12 @@ def run_guard_gate(candidate: dict) -> dict:
     profile = candidate.get("profile", {})
     headline = profile.get("headline", "").lower()
     
-    # Non-AI headline with no AI career = not a fit for this role
+    # 1. Non-AI headline with no AI career = not a fit for this role
     if stuffer_info["non_ai_headline"] and not stuffer_info["has_ai_career"]:
         disqualified = True
         disqualify_reason = f"Non-AI domain: '{profile.get('headline', '')}'"
     
-    # CV/Speech/Robotics only (check headline + career)
+    # 2. CV/Speech/Robotics only (check headline + career)
     is_cv_robotics_only = any(pat in headline for pat in CV_SPEECH_ROBOTICS_ONLY)
     if is_cv_robotics_only:
         # Check if they ALSO have NLP/IR experience
@@ -565,6 +565,42 @@ def run_guard_gate(candidate: dict) -> dict:
         if not has_nlp:
             disqualified = True
             disqualify_reason = f"CV/Speech/Robotics only without NLP/IR exposure"
+
+    # 3. Geographic relocation compliance check
+    location = (profile.get("location") or "").lower()
+    willing_to_relocate = candidate.get("redrob_signals", {}).get("willing_to_relocate", True)
+    target_cities = ["noida", "pune", "delhi", "ncr", "gurgaon", "ghaziabad", "faridabad"]
+    is_target_local = any(city in location for city in target_cities)
+    approved_remote_cities = ["hyderabad", "mumbai"]
+    is_approved_remote = any(city in location for city in approved_remote_cities)
+    
+    # If not in target city and not in approved remote city, relocation MUST be True
+    if not is_target_local and not is_approved_remote and not willing_to_relocate:
+        disqualified = True
+        disqualify_reason = f"Geographic relocation refusal: {profile.get('location', 'Unknown')}"
+
+    # 4. Consulting-only career check
+    if company_info["services_only"]:
+        disqualified = True
+        disqualify_reason = "Consulting-only career trajectory"
+
+    # 5. Academic-only career check
+    academic_keywords = ["university", "institute", "college", "research lab", "academy"]
+    career_history = candidate.get("career_history", [])
+    if career_history:
+        all_academic = all(any(kw in (j.get("company") or "").lower() for kw in academic_keywords) for j in career_history)
+        if all_academic:
+            # Check if they have production depth
+            career_text = " ".join([
+                (j.get("title") or "") + " " + (j.get("description") or "")
+                for j in career_history
+            ]).lower()
+            # Production indicators:
+            prod_markers = ["production", "deployed", "scaled", "latency", "real users", "monitoring", "kubernetes", "docker", "aws", "gcp"]
+            has_production = sum(1 for m in prod_markers if m in career_text) >= 2
+            if not has_production:
+                disqualified = True
+                disqualify_reason = "Academic-only career without production ML depth"
     
     return {
         "trust_grade": trust_grade,

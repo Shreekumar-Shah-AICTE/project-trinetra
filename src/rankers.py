@@ -195,15 +195,26 @@ def score_career_trajectory(candidate: dict) -> dict:
     # ── Location Fit (0-1) ──
     location = profile.get("location", "").lower()
     country = profile.get("country", "").lower()
+    willing_to_relocate = candidate.get("redrob_signals", {}).get("willing_to_relocate", True)
     
-    if any(loc in location for loc in PREFERRED_LOCATIONS):
+    target_cities = ["noida", "pune", "delhi", "ncr", "gurgaon", "ghaziabad", "faridabad"]
+    is_target_local = any(city in location for city in target_cities)
+    approved_remote_cities = ["hyderabad", "mumbai"]
+    is_approved_remote = any(city in location for city in approved_remote_cities)
+    
+    if is_target_local:
         location_score = 1.0
-    elif any(loc in location for loc in TIER1_INDIA_CITIES):
-        location_score = 0.7
-    elif "india" in country:
-        location_score = 0.4
+    elif is_approved_remote:
+        location_score = 0.85
+    elif willing_to_relocate:
+        if any(loc in location for loc in TIER1_INDIA_CITIES):
+            location_score = 0.70
+        elif "india" in country:
+            location_score = 0.40
+        else:
+            location_score = 0.10
     else:
-        location_score = 0.2
+        location_score = 0.0
     
     # Combine career sub-scores
     career_score = (
