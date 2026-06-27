@@ -24,8 +24,9 @@ def build_jd_query() -> str:
     """
     Build a synthetic query string from the JD's core concepts.
     This represents "what the ideal candidate looks like" in text form.
+    Includes synonym clusters to catch candidates who write about technologies
+    using adjacent industry terminology.
     """
-    # Build a weighted query — repeat high-importance concepts
     query_parts = []
     
     # Core concepts appear 3x (highest importance)
@@ -43,6 +44,26 @@ def build_jd_query() -> str:
     # Production keywords appear 2x
     for concept in PRODUCTION_KEYWORDS:
         query_parts.extend([concept] * 2)
+        
+    # Synonym expansions to capture adjacent terms (semantic bridge)
+    synonym_clusters = [
+        # Vector search synonyms
+        "vector database dense retrieval vector search similarity search approximate nearest neighbor ann index",
+        # Embedding synonyms
+        "dense vector representation sentence embedding text embeddings sentence transformers model",
+        # Re-ranking synonyms
+        "cross encoder bi encoder reranking reranker learning to rank learning-to-rank ltr xgboost lightgbm model",
+        # Hybrid retrieval synonyms
+        "hybrid search hybrid retrieval reciprocal rank fusion rrf lexical dense fusion bm25 tfidf search relevance",
+        # Evaluation synonyms
+        "search evaluation relevance evaluation offline evaluation ndcg mrr map precision recall f1 ranking benchmarks",
+        # Production scaling
+        "production deployment scalable pipeline low latency high throughput api integration docker kubernetes aws microservices",
+    ]
+    
+    # Repeat clusters 2x for weight
+    for cluster in synonym_clusters:
+        query_parts.extend([cluster] * 2)
     
     # Add key phrases from the JD
     jd_phrases = [

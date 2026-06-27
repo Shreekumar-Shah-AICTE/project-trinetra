@@ -1,0 +1,76 @@
+candidate_id,rank,score,reasoning
+CAND_0018499,1,0.058506,"[Trust: A]; 7.2 yrs; product lineage: Zomato, Google, Flipkart; career evidence: embeddings, faiss, ranking, retrieval; production deployment experience; 15d notice; recently active; Noida, Uttar Pradesh. Dim ranks: S#5/C#3/B#4/T#31"
+CAND_0055905,2,0.057977,"[Trust: A]; 8.1 yrs; product lineage: Flipkart, Uber, Rephrase.ai; career evidence: embeddings, faiss, ranking, retrieval; production deployment experience; 30d notice; recently active. Concerns: outside target geography (London). Dim ranks: S#1/C#36/B#6/T#35"
+CAND_0005260,3,0.057863,"[Trust: A]; 5.2 yrs; product lineage: Netflix, Yellow.ai; career evidence: embeddings, faiss, ranking, retrieval; production deployment experience; recently active. Dim ranks: S#6/C#7/B#16/T#16"
+CAND_0033861,4,0.056877,"[Trust: A]; 8.0 yrs; product lineage: Mad Street Den, Sarvam AI, Paytm; moderate JD alignment; production deployment experience; 30d notice. Concerns: inactive >90d; outside target geography (Vizag, Andhra Pradesh). Dim ranks: S#3/C#14/B#65/T#33"
+CAND_0046064,5,0.056751,"[Trust: A]; 8.9 yrs; product lineage: Salesforce, Verloop.io, Amazon; career evidence: embeddings, faiss, ranking, retrieval; production deployment experience; 30d notice. Concerns: outside target geography (Coimbatore, Tamil Nadu). Dim ranks: S#2/C#26/B#10/T#34"
+CAND_0081846,6,0.055671,"[Trust: A]; 6.7 yrs; product lineage: Razorpay, Paytm; career evidence: embeddings, faiss, ranking, retrieval; production deployment experience; 30d notice; recently active. Dim ranks: S#10/C#16/B#5/T#39"
+CAND_0092278,7,0.055281,"[Trust: A]; 6.8 yrs; product lineage: Microsoft, Paytm, Saarthi.ai; career evidence: embeddings, faiss, ranking, retrieval; production deployment experience; Pune, Maharashtra. Concerns: long notice (90d); inactive >90d. Dim ranks: S#4/C#4/B#75/T#42"
+CAND_0071974,8,0.054222,"[Trust: A]; 7.8 yrs; product lineage: Netflix, Meta, Mad Street Den; moderate JD alignment; production deployment experience. Concerns: outside target geography (Vizag, Andhra Pradesh). Dim ranks: S#8/C#15/B#13/T#36"
+CAND_0008425,9,0.054137,"[Trust: A]; 7.8 yrs; product lineage: Ola, Zomato, Amazon; moderate JD alignment; production deployment experience. Concerns: long notice (90d). Dim ranks: S#12/C#5/B#29/T#20"
+CAND_0005649,10,0.052215,"[Trust: A]; 7.4 yrs; product lineage: Sarvam AI, Aganitha, Amazon; moderate JD alignment; production deployment experience; Delhi, Delhi. Concerns: long notice (90d). Dim ranks: S#9/C#2/B#38/T#46"
+CAND_0041611,11,0.052001,"[Trust: A]; 6.4 yrs; product lineage: Locobuzz, Genpact AI; career evidence: embeddings, faiss, ranking, retrieval; production deployment experience; 30d notice. Concerns: inactive >90d. Dim ranks: S#7/C#45/B#66/T#49"
+CAND_0086022,12,0.051826,"[Trust: A]; 5.3 yrs; product lineage: Sarvam AI, Uber; career evidence: embeddings, faiss, ranking, retrieval; production deployment experience; 0d notice. Dim ranks: S#14/C#8/B#14/T#41"
+CAND_0077337,13,0.051661,"[Trust: A]; 7.0 yrs; product lineage: Paytm, Razorpay, Glance; moderate JD alignment; production deployment experience; recently active. Dim ranks: S#11/C#28/B#3/T#37"
+CAND_0011687,14,0.050853,"[Trust: A]; 7.8 yrs; product lineage: Niramai, Krutrim; moderate JD alignment; production deployment experience; 15d notice; recently active. Concerns: outside target geography (Indore, Madhya Pradesh). Dim ranks: S#22/C#13/B#2/T#26"
+CAND_0046525,15,0.05074,"[Trust: A]; 6.1 yrs; product lineage: Genpact AI, LinkedIn; career evidence: embeddings, faiss, ranking, retrieval; production deployment experience; recently active; Pune, Maharashtra. Dim ranks: S#16/C#1/B#7/T#72"
+CAND_0002025,16,0.050695,"[Trust: A]; 5.9 yrs; product lineage: Apple, Aganitha; moderate JD alignment; production deployment experience; 30d notice; recently active. Concerns: outside target geography (Trivandrum, Kerala). Dim ranks: S#17/C#23/B#1/T#60"
+CAND_0007411,17,0.050604,"[Trust: A]; 8.0 yrs; product lineage: Amazon, Yellow.ai; moderate JD alignment; production deployment experience; 15d notice. Concerns: inactive >90d. Dim ranks: S#23/C#12/B#63/T#18"
+CAND_0007009,18,0.049247,"[Trust: A]; 7.9 yrs; product lineage: PolicyBazaar, Netflix; moderate JD alignment; 30d notice; Noida, Uttar Pradesh. Dim ranks: S#27/C#6/B#12/T#17"
+CAND_0000031,19,0.04849,"[Trust: A]; 6.0 yrs; product lineage: Swiggy, Mad Street Den, Uber; recently active. Concerns: limited core skill evidence. Dim ranks: S#30/C#30/B#11/T#3"
+CAND_0079387,20,0.047916,"[Trust: A]; 6.9 yrs; product lineage: Microsoft, upGrad, Ola; moderate JD alignment; production deployment experience; 30d notice. Concerns: outside target geography (Trivandrum, Kerala). Dim ranks: S#19/C#34/B#9/T#38"
+CAND_0094759,21,0.047903,"[Trust: A]; 8.6 yrs; product lineage: Meta, Apple, Locobuzz; career evidence: embeddings, faiss, ranking, retrieval; production deployment experience; 30d notice. Concerns: inactive >90d. Dim ranks: S#20/C#9/B#59/T#43"
+CAND_0028793,22,0.047565,"[Trust: A]; 7.2 yrs; product lineage: Google, Amazon, Meesho; moderate JD alignment. Concerns: long notice (120d). Dim ranks: S#18/C#33/B#33/T#32"
+CAND_0010685,23,0.047441,"[Trust: A]; 6.7 yrs; product lineage: Rephrase.ai, Microsoft, Mad Street Den; moderate JD alignment; production deployment experience; 30d notice. Dim ranks: S#25/C#19/B#15/T#24"
+CAND_0030953,24,0.047229,"[Trust: A]; 7.8 yrs; product lineage: Nykaa, Niramai, Vedantu; moderate JD alignment; production deployment experience. Dim ranks: S#15/C#21/B#52/T#48"
+CAND_0011162,25,0.046206,"[Trust: A]; 5.8 yrs; product lineage: upGrad, Meesho, Google; moderate JD alignment; production deployment experience; recently active. Concerns: long notice (90d). Dim ranks: S#28/C#40/B#18/T#25"
+CAND_0083307,26,0.0461,"[Trust: A]; 7.8 yrs; product lineage: CRED, Netflix, Ola; moderate JD alignment. Concerns: long notice (120d); outside target geography (Vizag, Andhra Pradesh). Dim ranks: S#21/C#35/B#43/T#40"
+CAND_0044883,27,0.045638,"[Trust: A]; 6.3 yrs; product lineage: Mad Street Den, Adobe, Meesho; moderate JD alignment; production deployment experience; recently active. Concerns: long notice (90d). Dim ranks: S#13/C#42/B#31/T#71"
+CAND_0093547,28,0.045399,"[Trust: A]; 2.9 yrs; product lineage: PhonePe, Sarvam AI, Aganitha; moderate JD alignment; production deployment experience. Concerns: outside target geography (Coimbatore, Tamil Nadu). Dim ranks: S#24/C#53/B#27/T#44"
+CAND_0003977,29,0.045362,"[Trust: A]; 4.6 yrs; product lineage: Google, Rephrase.ai; moderate JD alignment; Delhi, Delhi. Dim ranks: S#37/C#18/B#42/T#15"
+CAND_0001930,30,0.044352,"[Trust: A]; 6.9 yrs; product lineage: Dream11, Flipkart, Nykaa. Concerns: limited core skill evidence; long notice (120d). Dim ranks: S#39/C#10/B#35/T#12"
+CAND_0001600,31,0.043689,"[Trust: A]; 6.2 yrs; product lineage: InMobi, BYJU'S; recently active. Concerns: limited core skill evidence; long notice (120d). Dim ranks: S#45/C#22/B#60/T#11"
+CAND_0003506,32,0.043279,"[Trust: A]; 5.9 yrs; product lineage: Dream11, BYJU'S, Zoho; recently active. Concerns: limited core skill evidence; long notice (90d). Dim ranks: S#36/C#39/B#45/T#13"
+CAND_0055992,33,0.042957,"[Trust: B]; 16.9 yrs; product lineage: CRED, Aganitha, Observe.AI; moderate JD alignment. Dim ranks: S#26/C#61/B#19/T#73"
+CAND_0014440,34,0.042763,"[Trust: A]; 6.4 yrs; product lineage: CRED, Freshworks, upGrad; production deployment experience; recently active. Concerns: limited core skill evidence. Dim ranks: S#31/C#20/B#8/T#68"
+CAND_0009516,35,0.041769,"[Trust: A]; 6.9 yrs; product lineage: Verloop.io, Paytm, Haptik; 30d notice; recently active. Concerns: limited core skill evidence; outside target geography (New York). Dim ranks: S#38/C#41/B#23/T#23"
+CAND_0003609,36,0.041346,"[Trust: A]; 6.1 yrs; product lineage: Sarvam AI, InMobi, PharmEasy. Concerns: limited core skill evidence; outside target geography (Bhubaneswar, Odisha). Dim ranks: S#43/C#27/B#40/T#14"
+CAND_0008618,37,0.04126,"[Trust: A]; 4.7 yrs; product lineage: Saarthi.ai, Zoho; moderate JD alignment; Gurgaon, Haryana. Concerns: long notice (120d). Dim ranks: S#42/C#17/B#61/T#21"
+CAND_0013665,38,0.040979,"[Trust: A]; 5.2 yrs; product lineage: InMobi, Ola; 30d notice; recently active. Concerns: limited core skill evidence; outside target geography (Trivandrum, Kerala). Dim ranks: S#44/C#24/B#17/T#30"
+CAND_0003756,39,0.040906,"[Trust: A]; 6.5 yrs; product lineage: Nykaa, PolicyBazaar, CRED; recently active. Concerns: limited core skill evidence; long notice (90d). Dim ranks: S#29/C#38/B#50/T#61"
+CAND_0008202,40,0.040472,"[Trust: A]; 5.7 yrs; product lineage: Yellow.ai, Freshworks. Concerns: limited core skill evidence; outside target geography (Vizag, Andhra Pradesh). Dim ranks: S#34/C#47/B#57/T#47"
+CAND_0000099,41,0.040269,"[Trust: A]; 2.6 yrs; product lineage: Razorpay, Flipkart; production deployment experience; recently active. Concerns: limited core skill evidence; long notice (90d). Dim ranks: S#65/C#56/B#30/T#9"
+CAND_0000010,42,0.040041,[Trust: A]; 4.6 yrs; product lineage: Ola. Concerns: limited core skill evidence; long notice (120d). Dim ranks: S#60/C#44/B#69/T#1
+CAND_0006538,43,0.03973,"[Trust: A]; 5.7 yrs; product lineage: Dream11, PhonePe. Concerns: limited core skill evidence. Dim ranks: S#33/C#48/B#21/T#64"
+CAND_0000063,44,0.039125,"[Trust: A]; 5.4 yrs; product lineage: Swiggy; Delhi, Delhi. Concerns: limited core skill evidence; long notice (90d). Dim ranks: S#63/C#51/B#34/T#6"
+CAND_0001218,45,0.039058,"[Trust: A]; 6.4 yrs; product lineage: Nykaa, Paytm, Dream11. Concerns: limited core skill evidence; long notice (90d). Dim ranks: S#35/C#50/B#47/T#45"
+CAND_0009505,46,0.039001,[Trust: A]; 4.9 yrs; product lineage: Glance; moderate JD alignment. Concerns: long notice (90d); inactive >90d. Dim ranks: S#46/C#63/B#56/T#22
+CAND_0000055,47,0.03889,"[Trust: A]; 7.3 yrs; product lineage: Razorpay, Flipkart; recently active. Concerns: limited core skill evidence; long notice (150d). Dim ranks: S#64/C#57/B#62/T#5"
+CAND_0005269,48,0.038808,"[Trust: A]; 6.1 yrs; product lineage: Sarvam AI, Saarthi.ai; production deployment experience. Concerns: limited core skill evidence; outside target geography (Kochi, Kerala). Dim ranks: S#54/C#11/B#28/T#62"
+CAND_0000082,49,0.038725,[Trust: A]; 7.4 yrs; product lineage: Zomato. Concerns: limited core skill evidence; long notice (120d). Dim ranks: S#57/C#60/B#46/T#8
+CAND_0000067,50,0.038701,[Trust: A]; 3.9 yrs; product lineage: Swiggy; production deployment experience; recently active. Concerns: limited core skill evidence; long notice (150d). Dim ranks: S#68/C#66/B#68/T#7
+CAND_0013122,51,0.038477,"[Trust: A]; 4.3 yrs; product lineage: Unacademy, Nykaa; 30d notice. Concerns: limited core skill evidence; outside target geography (Coimbatore, Tamil Nadu). Dim ranks: S#48/C#46/B#25/T#29"
+CAND_0014683,52,0.038199,"[Trust: A]; 5.6 yrs; product lineage: Rephrase.ai, Dream11. Concerns: limited core skill evidence; long notice (120d). Dim ranks: S#41/C#25/B#49/T#69"
+CAND_0012988,53,0.038004,"[Trust: A]; 4.3 yrs; product lineage: Niramai, Nykaa. Concerns: limited core skill evidence; inactive >90d. Dim ranks: S#52/C#29/B#58/T#27"
+CAND_0014715,54,0.037983,[Trust: A]; 4.2 yrs; product lineage: Saarthi.ai; recently active. Concerns: limited core skill evidence. Dim ranks: S#32/C#59/B#24/T#70
+CAND_0000025,55,0.037862,[Trust: A]; 7.3 yrs; product lineage: Zomato. Concerns: limited core skill evidence; long notice (120d). Dim ranks: S#69/C#64/B#54/T#2
+CAND_0000051,56,0.037503,[Trust: A]; 6.2 yrs; product lineage: Zomato. Concerns: limited core skill evidence; long notice (90d). Dim ranks: S#72/C#54/B#55/T#4
+CAND_0013002,57,0.03744,[Trust: A]; 4.4 yrs as Senior Software Engineer (ML). Concerns: limited core skill evidence; outside target geography (New York). Dim ranks: S#51/C#69/B#37/T#28
+CAND_0000027,58,0.037365,[Trust: A]; 3.9 yrs as DevOps Engineer; production deployment experience; recently active. Concerns: limited core skill evidence; long notice (90d). Dim ranks: S#55/C#67/B#44/T#52
+CAND_0000108,59,0.037334,[Trust: A]; 3.6 yrs; product lineage: Zomato. Concerns: limited core skill evidence; inactive >90d. Dim ranks: S#67/C#58/B#41/T#10
+CAND_0008297,60,0.037241,"[Trust: A]; 5.3 yrs; product lineage: Rephrase.ai, Dream11; 30d notice. Concerns: limited core skill evidence; inactive >90d. Dim ranks: S#59/C#55/B#22/T#19"
+CAND_0001302,61,0.036379,"[Trust: A]; 5.8 yrs; product lineage: Paytm, Observe.AI, Unacademy. Concerns: limited core skill evidence; inactive >90d. Dim ranks: S#40/C#49/B#32/T#59"
+CAND_0014063,62,0.035974,"[Trust: A]; 5.4 yrs; product lineage: Sarvam AI, PhonePe. Concerns: limited core skill evidence; outside target geography (Vizag, Andhra Pradesh). Dim ranks: S#47/C#32/B#20/T#67"
+CAND_0000112,63,0.035878,[Trust: A]; 3.8 yrs; product lineage: Zomato. Concerns: limited core skill evidence. Dim ranks: S#58/C#43/B#48/T#58
+CAND_0009200,64,0.035692,[Trust: B]; 5.7 yrs as AI Specialist. Concerns: limited core skill evidence; inactive >90d. Dim ranks: S#50/C#65/B#39/T#75
+CAND_0000056,65,0.03561,[Trust: A]; 1.3 yrs as Frontend Engineer; production deployment experience. Concerns: limited core skill evidence; inactive >90d. Dim ranks: S#61/C#74/B#72/T#54
+CAND_0009236,66,0.035407,[Trust: A]; 6.3 yrs; product lineage: Vedantu. Concerns: limited core skill evidence; long notice (120d). Dim ranks: S#53/C#31/B#67/T#66
+CAND_0007861,67,0.03529,"[Trust: A]; 5.3 yrs; product lineage: Observe.AI, Genpact AI, Saarthi.ai. Concerns: limited core skill evidence; long notice (90d). Dim ranks: S#49/C#37/B#64/T#65"
+CAND_0000059,68,0.034313,"[Trust: A]; 1.5 yrs as Frontend Engineer; production deployment experience; Noida, Uttar Pradesh. Concerns: limited core skill evidence; long notice (90d). Dim ranks: S#66/C#71/B#73/T#55"
+CAND_0006437,69,0.033525,"[Trust: A]; 6.2 yrs; product lineage: Razorpay, Razorpay. Concerns: limited core skill evidence; long notice (90d). Dim ranks: S#56/C#52/B#71/T#63"
+CAND_0000068,70,0.03345,"[Trust: B]; 1.5 yrs as Java Developer; 30d notice; Noida, Uttar Pradesh. Concerns: limited core skill evidence. Dim ranks: S#62/C#72/B#26/T#74"
+CAND_0000024,71,0.032563,[Trust: A]; 7.5 yrs as HR Manager. Concerns: limited core skill evidence; inactive >90d. Dim ranks: S#70/C#62/B#53/T#51
+CAND_0000062,72,0.032011,[Trust: A]; 4.3 yrs as DevOps Engineer. Concerns: limited core skill evidence; long notice (90d). Dim ranks: S#71/C#68/B#36/T#56
+CAND_0000087,73,0.031175,[Trust: A]; 2.5 yrs as Full Stack Developer; recently active. Concerns: limited core skill evidence; long notice (120d). Dim ranks: S#74/C#70/B#51/T#57
+CAND_0000047,74,0.031118,[Trust: A]; 2.4 yrs as Project Manager. Concerns: limited core skill evidence; long notice (90d). Dim ranks: S#73/C#73/B#70/T#53
+CAND_0000003,75,0.030987,[Trust: A]; 1.1 yrs as Customer Support. Concerns: limited core skill evidence; long notice (150d). Dim ranks: S#75/C#75/B#74/T#50

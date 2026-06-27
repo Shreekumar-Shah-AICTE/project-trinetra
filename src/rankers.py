@@ -20,7 +20,7 @@ from src.jd import (
     PRODUCTION_KEYWORDS,
     IDEAL_YOE_MIN, IDEAL_YOE_MAX, SWEET_SPOT_YOE_MIN, SWEET_SPOT_YOE_MAX,
     PREFERRED_LOCATIONS, TIER1_INDIA_CITIES,
-    PRODUCT_COMPANIES, SERVICES_COMPANIES,
+    PRODUCT_COMPANIES, SERVICES_COMPANIES, FICTIONAL_COMPANIES,
 )
 
 
@@ -185,12 +185,52 @@ def score_career_trajectory(candidate: dict) -> dict:
         else:
             stability_score = 0.2
     
-    # ── Progressive Seniority (0-1) ──
-    # Check if title progression shows growth
-    seniority_keywords = ["senior", "staff", "principal", "lead", "head", "director", "vp", "cto"]
-    current_title = profile.get("current_title", "").lower()
-    has_senior_current = any(kw in current_title for kw in seniority_keywords)
-    seniority_score = 0.7 if has_senior_current else 0.4
+    # ── Career Velocity Index (CVI) ──
+    # Tracks growth velocity: current seniority level + title promotions + company caliber growth
+    seniority_scale = {
+        "cto": 1.0, "vp": 1.0, "director": 1.0, "head": 1.0, "principal": 1.0, "staff": 1.0,
+        "lead": 0.8, "senior": 0.8, "sr": 0.8, "manager": 0.8, "lead engineer": 0.85,
+        "engineer": 0.5, "developer": 0.5, "scientist": 0.5, "analyst": 0.4,
+        "associate": 0.3, "junior": 0.3, "jr": 0.3, "intern": 0.1, "qa": 0.2, "test": 0.2
+    }
+    
+    def get_title_rank(t_str: str) -> float:
+        t_str = t_str.lower()
+        for kw, score in seniority_scale.items():
+            if kw in t_str:
+                return score
+        return 0.3  # Baseline rank
+        
+    current_seniority = get_title_rank(profile.get("current_title", ""))
+    
+    if career and len(career) > 1:
+        # Sort jobs chronologically (oldest first)
+        sorted_jobs = sorted(
+            career, 
+            key=lambda j: j.get("start_date") or "9999-99-99"
+        )
+        first_seniority = get_title_rank(sorted_jobs[0].get("title", ""))
+        last_seniority = get_title_rank(sorted_jobs[-1].get("title", ""))
+        title_growth = max(0.0, last_seniority - first_seniority)
+        
+        def get_company_score(c_name: str) -> float:
+            c_name = c_name.lower().strip()
+            if c_name in PRODUCT_COMPANIES or c_name in FICTIONAL_COMPANIES:
+                return 1.0
+            if c_name in SERVICES_COMPANIES:
+                return 0.2
+            return 0.6
+            
+        first_company_score = get_company_score(sorted_jobs[0].get("company", ""))
+        last_company_score = get_company_score(sorted_jobs[-1].get("company", ""))
+        company_growth = last_company_score - first_company_score
+    else:
+        title_growth = 0.0
+        company_growth = 0.0
+        
+    # Combine growth indicators into Career Velocity Index
+    cvi_score = current_seniority * 0.5 + title_growth * 0.3 + (company_growth + 0.8) / 1.8 * 0.2
+    cvi_score = max(0.1, min(1.0, cvi_score))
     
     # ── Location Fit (0-1) ──
     location = profile.get("location", "").lower()
@@ -219,9 +259,9 @@ def score_career_trajectory(candidate: dict) -> dict:
     # Combine career sub-scores
     career_score = (
         0.25 * yoe_score
-        + 0.30 * product_ratio
+        + 0.25 * product_ratio
         + 0.15 * stability_score
-        + 0.10 * seniority_score
+        + 0.15 * cvi_score
         + 0.20 * location_score
     )
     
@@ -230,7 +270,7 @@ def score_career_trajectory(candidate: dict) -> dict:
         "yoe_score": yoe_score,
         "product_ratio": product_ratio,
         "stability_score": stability_score,
-        "seniority_score": seniority_score,
+        "cvi_score": cvi_score,
         "location_score": location_score,
         "yoe": yoe,
         "product_jobs": product_jobs,

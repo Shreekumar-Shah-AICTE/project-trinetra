@@ -55,7 +55,7 @@ def load_scores_from_db(db_path) -> list[dict]:
     
     cursor.execute(
         """
-        SELECT s.candidate_id, s.skill_relevance, s.career_trajectory, s.behavioral_availability, s.trust_score, s.semantic_fit
+        SELECT s.candidate_id, s.skill_relevance, s.career_trajectory, s.behavioral_availability, s.trust_score, s.semantic_fit, c.trust_grade
         FROM scores s
         JOIN candidates c ON s.candidate_id = c.candidate_id
         WHERE c.disqualified = 0
@@ -164,18 +164,23 @@ def run_optimizer():
     best_runs = []
     checked = 0
     
+    # Keep a lookup for trust grades
+    trust_grades = {c["candidate_id"]: c["trust_grade"] for c in scored_candidates}
+    
     # Pre-render flat candidate data for maximum iteration speed
     cids = list(candidate_ranks.keys())
     candidate_data = []
     for cid in cids:
         ranks = candidate_ranks[cid]
+        grade = trust_grades.get(cid, "A")
         candidate_data.append((
             cid,
             ranks["skill"],
             ranks["career"],
             ranks["behavioral"],
             ranks["trust"],
-            ranks["semantic"]
+            ranks["semantic"],
+            grade
         ))
     
     for w_skill in w_skill_vals:
@@ -192,7 +197,7 @@ def run_optimizer():
                             
                             # Perform RRF calculations inline for maximum performance
                             rrf_scores = []
-                            for cid, r_skill, r_career, r_behavioral, r_trust, r_semantic in candidate_data:
+                            for cid, r_skill, r_career, r_behavioral, r_trust, r_semantic, grade in candidate_data:
                                 score = (
                                     w_skill * (1.0 / (k + r_skill)) +
                                     w_career * (1.0 / (k + r_career)) +
@@ -200,7 +205,20 @@ def run_optimizer():
                                     w_trust * (1.0 / (k + r_trust)) +
                                     w_semantic * (1.0 / (k + r_semantic))
                                 )
-                                rrf_scores.append((score, cid))
+                                
+                                # Apply trust grade multipliers to align with rank.py
+                                if grade == "A":
+                                    multiplier = 1.00
+                                elif grade == "B":
+                                    multiplier = 0.85
+                                elif grade == "C":
+                                    multiplier = 0.40
+                                elif grade == "D":
+                                    multiplier = 0.10
+                                else:
+                                    multiplier = 0.00
+                                    
+                                rrf_scores.append((score * multiplier, cid))
                             
                             # Sort and take top 100
                             rrf_scores.sort(key=lambda x: (-x[0], x[1]))

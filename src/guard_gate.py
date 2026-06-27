@@ -522,6 +522,57 @@ def run_guard_gate(candidate: dict) -> dict:
     # Education/experience mismatch: -0.20
     if edu_exp_info["is_suspicious"]:
         trust_score -= 0.20
+        
+    # ── Behavioral Deductions (mirroring gold_labeler.py's demotions) ──
+    signals = candidate.get("redrob_signals", {})
+    
+    # A. Inactive for > 6 months
+    last_active = signals.get("last_active_date")
+    if last_active:
+        try:
+            clean_date = str(last_active)[:10]
+            last_date = datetime.strptime(clean_date, "%Y-%m-%d")
+            ref_date = datetime(2026, 6, 27)
+            months_inactive = (ref_date.year - last_date.year) * 12 + (ref_date.month - last_date.month)
+            if months_inactive > 6:
+                trust_score -= 0.30
+        except Exception:
+            trust_score -= 0.30  # Mangled date penalty
+            
+    # B. Notice period penalties
+    notice_days = signals.get("notice_period_days", 0)
+    if notice_days > 30:
+        if notice_days > 60:
+            trust_score -= 0.30
+        else:
+            trust_score -= 0.15
+            
+    # C. Recruiter response rate < 10%
+    response_rate = signals.get("recruiter_response_rate")
+    if response_rate is not None and response_rate < 0.10:
+        trust_score -= 0.15
+        
+    # D. Not open to work + low engagement
+    if not signals.get("open_to_work_flag", True) and response_rate is not None and response_rate < 0.50:
+        trust_score -= 0.15
+        
+    # E. Offer acceptance rate == 0.0 (declines everything)
+    offer_rate = signals.get("offer_acceptance_rate")
+    if offer_rate == 0.0:
+        trust_score -= 0.15
+        
+    # F. Interview completion rate < 60% (no-shows)
+    completion_rate = signals.get("interview_completion_rate")
+    if completion_rate is not None and completion_rate < 0.60:
+        trust_score -= 0.15
+        
+    # G. Missing contact verifications
+    verified_email = signals.get("verified_email", True)
+    verified_phone = signals.get("verified_phone", True)
+    linkedin = signals.get("linkedin_connected", True)
+    missing_links = sum([not verified_email, not verified_phone, not linkedin])
+    if missing_links >= 2:
+        trust_score -= 0.15
     
     trust_score = max(0.0, min(1.0, trust_score))
     

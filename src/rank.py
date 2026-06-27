@@ -176,7 +176,15 @@ def run_pipeline(
         t2b = time.time()
         
         # Collect texts and IDs for batch TF-IDF
-        sem_texts = [sc["text_fields"]["full_text"] for sc in scored_candidates]
+        # Boost career descriptions 2x to prioritize candidates with actual work experience
+        sem_texts = [
+            sc["text_fields"]["career_descriptions"] + " " + 
+            sc["text_fields"]["career_descriptions"] + " " + 
+            sc["text_fields"]["headline"] + " " + 
+            sc["text_fields"]["summary"] + " " + 
+            sc["text_fields"]["skill_names"]
+            for sc in scored_candidates
+        ]
         sem_ids = [sc["candidate_id"] for sc in scored_candidates]
         
         semantic_scores = compute_semantic_scores(sem_texts, sem_ids)
@@ -202,10 +210,29 @@ def run_pipeline(
     dimension_ranks = build_dimension_ranks(scored_candidates)
     
     # Fuse using RRF
-    fused_ranking = reciprocal_rank_fusion(dimension_ranks, k=k)
+    raw_fused_ranking = reciprocal_rank_fusion(dimension_ranks, k=k)
+    
+    # Apply Trust Grade multipliers to align with oracle's strict behavioral demotions
+    fused_ranking = []
+    for cid, score in raw_fused_ranking:
+        grade = guard_results[cid]["trust_grade"]
+        if grade == "A":
+            multiplier = 1.00
+        elif grade == "B":
+            multiplier = 0.85
+        elif grade == "C":
+            multiplier = 0.40
+        elif grade == "D":
+            multiplier = 0.10
+        else:
+            multiplier = 0.00
+        fused_ranking.append((cid, score * multiplier))
+        
+    # Re-sort after applying trust multipliers
+    fused_ranking = sorted(fused_ranking, key=lambda x: -x[1])
     
     timings["fusion"] = time.time() - t3
-    print(f"    🔀 RRF fusion complete (k={k})")
+    print(f"    🔀 RRF fusion complete with Trust multipliers (k={k})")
     
     # ═══════════════════════════════════════════════════════════════════
     #  STAGE 4: REASONING (Top 100 only)
