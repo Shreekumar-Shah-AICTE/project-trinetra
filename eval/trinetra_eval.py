@@ -46,6 +46,9 @@ sys.path.insert(0, str(ROOT / "src"))
 from eval.metrics import evaluate, load_gold, load_ranking
 from eval.reasoning_audit import audit_reasoning
 from eval.iteration_tracker import save_run, compare_runs, show_history, get_latest_run
+from eval.hallucination_validator import verify_reasoning_facts
+from eval.adversarial_generator import generate_suite_of_adversaries
+from eval.interview_simulator import generate_defense_brief, generate_interview_prep
 
 
 def print_banner():
@@ -172,7 +175,7 @@ def run_scoring_metrics(submission_path: str, gold_path: str) -> dict:
     return results
 
 
-def run_reasoning_audit(submission_path: str) -> dict:
+def run_reasoning_audit(submission_path: str, candidates_path: str = None) -> dict:
     """Phase 4: Simulate Stage 4 reasoning review."""
     print("  [4/6] REASONING AUDIT (Stage 4 Simulation)")
     print("  " + "-" * 40)
@@ -183,12 +186,144 @@ def run_reasoning_audit(submission_path: str) -> dict:
         status = "PASS" if check["passed"] else "FAIL"
         print(f"  [{status}] {name}: {check['message']}")
 
+    # Fact Hallucination Verification
+    if candidates_path and os.path.exists(candidates_path):
+        import csv
+        
+        # Load candidates lookup by ID
+        candidates_lookup = {}
+        ext = os.path.splitext(candidates_path)[1].lower()
+        if ext == ".json":
+            with open(candidates_path, "r", encoding="utf-8") as f:
+                data = json.load(f)
+                candidates = data if isinstance(data, list) else [data]
+            for c in candidates:
+                candidates_lookup[c["candidate_id"]] = c
+        else:
+            with open(candidates_path, "r", encoding="utf-8") as f:
+                for line in f:
+                    line = line.strip()
+                    if not line:
+                        continue
+                    try:
+                        c = json.loads(line)
+                        candidates_lookup[c["candidate_id"]] = c
+                    except:
+                        pass
+        
+        # Audit each row in submission
+        hallucination_errors = []
+        with open(submission_path, encoding="utf-8", newline="") as f:
+            rows = list(csv.DictReader(f))
+            for row in rows:
+                cid = row.get("candidate_id", "")
+                reasoning = row.get("reasoning", "")
+                if cid in candidates_lookup:
+                    cand = candidates_lookup[cid]
+                    val_res = verify_reasoning_facts(cand, reasoning)
+                    if not val_res["passed"]:
+                        for err in val_res["errors"]:
+                            hallucination_errors.append(f"Candidate {cid}: {err}")
+                            
+        hallucination_ok = len(hallucination_errors) == 0
+        status = "PASS" if hallucination_ok else "FAIL"
+        msg = "No hallucinations detected" if hallucination_ok else f"{len(hallucination_errors)} hallucination(s) found"
+        print(f"  [{status}] hallucination_check: {msg}")
+        results["checks"]["hallucination_check"] = {
+            "passed": hallucination_ok,
+            "message": msg
+        }
+        if not hallucination_ok:
+            results["errors"].extend(hallucination_errors[:5])
+            print("    Sample Hallucinations:")
+            for err in hallucination_errors[:5]:
+                print(f"      - {err}")
+            
+            # Recompute checks score
+            results["checks_passed"] = sum(1 for c in results["checks"].values() if c["passed"])
+            results["total_checks"] = len(results["checks"])
+            results["score"] = results["checks_passed"] / results["total_checks"]
+    else:
+        print("  [SKIP] hallucination_check: Requires candidates path")
+
     print()
     print(f"  Score: {results['checks_passed']}/{results['total_checks']} checks passed")
     print()
 
     return {"score": results["score"], "checks_passed": results["checks_passed"],
             "total_checks": results["total_checks"], "errors": results["errors"]}
+
+
+def run_adversarial_test_suite(candidates_path: str) -> bool:
+    """
+    Generate synthetic adversarial clones, feed them to Guard Gate,
+    and verify they are caught with 100% precision.
+    """
+    print()
+    print("  ====================================================")
+    print("  ADVERSARIAL RED-TEAM TEST SUITE (Guard Gate Audit)")
+    print("  ====================================================")
+    print("  Generating synthetic anomalies to stress-test border security...")
+    print()
+
+    from src.guard_gate import run_guard_gate
+
+    # Load 5 sample base candidates
+    base_candidates = []
+    ext = os.path.splitext(candidates_path)[1].lower()
+    if ext == ".json":
+        with open(candidates_path, "r", encoding="utf-8") as f:
+            data = json.load(f)
+            base_candidates = (data if isinstance(data, list) else [data])[:10]
+    else:
+        with open(candidates_path, "r", encoding="utf-8") as f:
+            for line in f:
+                line = line.strip()
+                if not line:
+                    continue
+                try:
+                    base_candidates.append(json.loads(line))
+                    if len(base_candidates) >= 10:
+                        break
+                except:
+                    pass
+
+    if len(base_candidates) < 5:
+        print("  [ERROR] Aligned test requires at least 5 candidate profiles.")
+        return False
+
+    # Generate adversaries
+    adversaries = generate_suite_of_adversaries(base_candidates)
+    
+    test_cases = [
+        ("Time-Travel Tech Fraud", adversaries[0], lambda res: res["is_hard_honeypot"]),
+        ("Date Inflation Fraud", adversaries[1], lambda res: len(res["violations"]) > 0),
+        ("Fictional Company Fraud", adversaries[2], lambda res: len(res["company_info"]["fictional_companies"]) > 0),
+        ("Expert-Zero Duration Fraud", adversaries[3], lambda res: res["is_hard_honeypot"] or res["expertise_info"]["is_suspicious"]),
+        ("YOE-Education Mismatch", adversaries[4], lambda res: len(res["violations"]) > 0 or res["edu_exp_info"]["is_suspicious"]),
+    ]
+
+    all_passed = True
+    print(f"  Running {len(test_cases)} adversarial test vectors:")
+    print("  " + "-" * 50)
+    
+    for name, cand, validator_fn in test_cases:
+        res = run_guard_gate(cand)
+        passed = validator_fn(res)
+        status = "PASS" if passed else "FAIL"
+        print(f"  [{status}] {name:<30}")
+        if not passed:
+            all_passed = False
+            print(f"    - Violations detected: {res['violations']}")
+            print(f"    - Trust score: {res['trust_score']:.4f} | Grade: {res['trust_grade']}")
+            
+    print()
+    if all_passed:
+        print("  VERDICT: PERFECT - Guard Gate successfully blocked all adversarial injections!")
+    else:
+        print("  VERDICT: VULNERABLE - Guard Gate failed to block one or more adversarial vectors.")
+    print()
+    return all_passed
 
 
 def run_honeypot_check(candidates_path: str, submission_path: str) -> dict:
@@ -396,12 +531,21 @@ def main():
     parser.add_argument("--quick", action="store_true", help="Skip gold regeneration (use existing)")
     parser.add_argument("--history", action="store_true", help="Show run history and exit")
     parser.add_argument("--notes", default="", help="Notes about what changed in this run")
+    parser.add_argument("--adversarial", action="store_true", help="Run adversarial red-team test suite and exit")
     args = parser.parse_args()
 
     # History mode
     if args.history:
         show_history()
         return
+
+    # Adversarial mode
+    if args.adversarial:
+        if not args.candidates:
+            print("  ERROR: Candidates file required for adversarial tests. Provide --candidates.")
+            sys.exit(1)
+        passed = run_adversarial_test_suite(args.candidates)
+        sys.exit(0 if passed else 1)
 
     if not os.path.exists(args.submission):
         print(f"  ERROR: Submission file not found: {args.submission}")
@@ -429,7 +573,7 @@ def main():
     metrics_result = run_scoring_metrics(args.submission, args.gold)
 
     # Phase 4: Reasoning Audit
-    reasoning_result = run_reasoning_audit(args.submission)
+    reasoning_result = run_reasoning_audit(args.submission, args.candidates)
 
     # Phase 5: Honeypot Check
     if args.candidates:
@@ -452,6 +596,49 @@ def main():
     # Final Report
     print_final_report(format_result, metrics_result, reasoning_result,
                        honeypot_result, gem_result, elapsed)
+
+    # Phase 7: Recruiter Defense Brief Generation
+    if args.candidates and os.path.exists(args.submission):
+        print("  [7/7] RECRUITER DEFENSE BRIEF")
+        print("  " + "-" * 40)
+        
+        # Load submission IDs in rank order
+        ranked_ids = load_ranking(args.submission)
+        top_10_ids = ranked_ids[:10]
+        
+        # Load candidates
+        top_10_candidates = []
+        candidates_lookup = {}
+        ext = os.path.splitext(args.candidates)[1].lower()
+        if ext == ".json":
+            with open(args.candidates, "r", encoding="utf-8") as f:
+                data = json.load(f)
+                candidates = data if isinstance(data, list) else [data]
+            for c in candidates:
+                candidates_lookup[c["candidate_id"]] = c
+        else:
+            with open(args.candidates, "r", encoding="utf-8") as f:
+                for line in f:
+                    line = line.strip()
+                    if not line:
+                        continue
+                    try:
+                        c = json.loads(line)
+                        candidates_lookup[c["candidate_id"]] = c
+                    except:
+                        pass
+        
+        # Assemble in rank order
+        for cid in top_10_ids:
+            if cid in candidates_lookup:
+                top_10_candidates.append(candidates_lookup[cid])
+                
+        if top_10_candidates:
+            brief_path = os.path.join(os.path.dirname(args.submission), "eval", "interview_defense.txt")
+            generate_defense_brief(top_10_candidates, brief_path)
+        else:
+            print("  [SKIP] Could not load top-10 candidates for defense card.")
+        print()
 
     # Save to iteration tracker
     if args.run_name:

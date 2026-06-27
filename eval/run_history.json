@@ -197,6 +197,54 @@
         "gems_in_top100": 6
       },
       "notes": "Fitted RRF weights from grid tuner: skill=1.0, career=1.6, behavioral=1.0, trust=0.8, semantic=0.8"
+    },
+    {
+      "name": "session_audit",
+      "timestamp": "2026-06-28T00:08:32.866162",
+      "metrics": {
+        "NDCG@10": 1.0,
+        "NDCG@50": 0.7714001507079432,
+        "MAP": 0.007579401835771982,
+        "P@10": 1.0,
+        "P@5": 1.0,
+        "composite": 0.7825569554877487
+      },
+      "honeypot_stats": {
+        "total_honeypots": 460,
+        "honeypots_in_top100": 0,
+        "honeypot_rate": 0.0
+      },
+      "reasoning_score": 1.0,
+      "gem_stats": {
+        "total_gems": 131,
+        "gems_in_top10": 0,
+        "gems_in_top100": 6
+      },
+      "notes": ""
+    },
+    {
+      "name": "masterpiece_validation",
+      "timestamp": "2026-06-28T00:24:01.415879",
+      "metrics": {
+        "NDCG@10": 1.0,
+        "NDCG@50": 0.7714001507079432,
+        "MAP": 0.007579401835771982,
+        "P@10": 1.0,
+        "P@5": 1.0,
+        "composite": 0.7825569554877487
+      },
+      "honeypot_stats": {
+        "total_honeypots": 460,
+        "honeypots_in_top100": 0,
+        "honeypot_rate": 0.0
+      },
+      "reasoning_score": 1.0,
+      "gem_stats": {
+        "total_gems": 131,
+        "gems_in_top10": 0,
+        "gems_in_top100": 6
+      },
+      "notes": ""
     }
   ]
 }
