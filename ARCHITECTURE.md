@@ -97,7 +97,23 @@ project-trinetra/
 │   ├── fusion.py            # Reciprocal Rank Fusion (Eye 3)
 │   ├── reasoning.py         # Structured explanation chain compiler (Stage 4)
 │   ├── rank.py              # CLI orchestration script
-│   └── validate.py          # Post-run submission validator
+│   ├── validate.py          # Post-run submission validator
+│   ├── database.py          # SQLite 5-table audit system
+│   └── app.py               # Streamlit sandbox UI
+├── eval/                    # Self-Validation Suite (7 modules)
+│   ├── __init__.py
+│   ├── trinetra_eval.py     # MASTER COMMAND — runs all 6 validation phases
+│   ├── metrics.py           # Exact hackathon composite scoring formula
+│   ├── gold_labeler.py      # Independent proxy gold label generator (0-4 tiers)
+│   ├── gem_detector.py      # Plain-language gem finder
+│   ├── reasoning_audit.py   # Stage 4 manual review simulation (8 checks)
+│   ├── honeypot_audit.py    # Deep honeypot diagnostics & DQ risk check
+│   ├── iteration_tracker.py # Run history & A/B comparison engine
+│   ├── gold_auto.csv        # Generated gold labels (proxy ground truth)
+│   └── run_history.json     # Historical eval scores for iteration tracking
+├── data/
+│   ├── sample_candidates.json  # 50-candidate sample for sandbox/testing
+│   └── trinetra.db             # SQLite database (pipeline run audit trail)
 └── tests/
     ├── test_guard_gate.py   # Eye 1 unit tests (10 passing tests)
     └── test_fusion.py       # Eye 3 unit tests (5 passing tests)
@@ -114,3 +130,36 @@ project-trinetra/
     *   *Execution time*: **193 seconds** (~3.2 minutes) on full 100K JSONL
     *   *Honeypot detection*: 11 hard honeypots (0 in top 100)
     *   *Disqualified pool*: ~40,000 non-AI/non-engineering profiles
+
+---
+
+## 5. Self-Validation Suite (eval/)
+
+Without a public leaderboard, every tuning decision must be backed by local metrics. The eval suite provides 7 interconnected modules:
+
+### Master Command
+```bash
+python eval/trinetra_eval.py --candidates data/candidates.jsonl --submission submission.csv --run-name "v2_tuned"
+```
+Runs ALL 6 phases in sequence and saves results for iteration comparison.
+
+### Validation Phases
+
+| Phase | Module | What It Checks |
+|-------|--------|----------------|
+| 1 | `validate.py` | Spec compliance (100 rows, ranks 1-100, monotonic scores) |
+| 2 | `gold_labeler.py` | Generates proxy gold labels (tiers 0-4) **independently** of ranker |
+| 3 | `metrics.py` | NDCG@10 (50%), NDCG@50 (30%), MAP (15%), P@10 (5%) — exact spec formula |
+| 4 | `reasoning_audit.py` | 8 checks mirroring Stage 4 manual review |
+| 5 | `honeypot_audit.py` | Detection count (~80 expected) + top-100 leakage (DQ at >10%) |
+| 6 | `gem_detector.py` | Plain-language gem surfacing (non-AI title + real systems work) |
+
+### Iteration Tracking
+Every run is saved to `eval/run_history.json`. Compare runs:
+```bash
+python eval/trinetra_eval.py --history
+python eval/iteration_tracker.py compare --old "v1_baseline" --new "v2_tuned"
+```
+
+### Key Design Decision: Independence
+The gold labeler uses **different signals, weights, and logic** from the ranking engine to avoid circular evaluation. This means the metrics are a genuine, independent proxy for ground truth quality.
