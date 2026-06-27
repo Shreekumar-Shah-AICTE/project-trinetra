@@ -245,6 +245,30 @@
         "gems_in_top100": 6
       },
       "notes": ""
+    },
+    {
+      "name": "aligned_gold_run",
+      "timestamp": "2026-06-28T00:35:18.383863",
+      "metrics": {
+        "NDCG@10": 1.0,
+        "NDCG@50": 0.6752031720432379,
+        "MAP": 0.5900009330445121,
+        "P@10": 1.0,
+        "P@5": 1.0,
+        "composite": 0.8410610915696483
+      },
+      "honeypot_stats": {
+        "total_honeypots": 460,
+        "honeypots_in_top100": 0,
+        "honeypot_rate": 0.0
+      },
+      "reasoning_score": 1.0,
+      "gem_stats": {
+        "total_gems": 131,
+        "gems_in_top10": 0,
+        "gems_in_top100": 6
+      },
+      "notes": ""
     }
   ]
 }

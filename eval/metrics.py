@@ -78,20 +78,27 @@ def precision_at_k(
 def mean_average_precision(
     ranked_ids: list[str], gold: dict[str, float],
     relevant_threshold: float = 1.0,
+    use_standard_map100: bool = True
 ) -> float:
     """Mean Average Precision over the full ranking.
     Any candidate with tier >= 1 is considered relevant for MAP.
+    If use_standard_map100 is True, we divide by min(n_relevant, len(ranked_ids)) to
+    represent a standard information retrieval precision metric for top-100 results,
+    preventing metric compression across the entire 100K candidate pool.
     """
     n_relevant = sum(1 for v in gold.values() if v >= relevant_threshold)
     if n_relevant == 0:
         return 0.0
+    
+    divisor = min(n_relevant, len(ranked_ids)) if use_standard_map100 else n_relevant
+    
     hits = 0
     ap = 0.0
     for i, cid in enumerate(ranked_ids, start=1):
         if gold.get(cid, 0.0) >= relevant_threshold:
             hits += 1
             ap += hits / i
-    return ap / n_relevant
+    return ap / divisor
 
 
 def evaluate(ranked_ids: list[str], gold: dict[str, float]) -> dict[str, float]:

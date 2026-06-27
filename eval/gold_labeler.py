@@ -130,6 +130,12 @@ def _is_honeypot(candidate: dict) -> bool:
     skills = candidate.get("skills", [])
     ref_year = 2026
 
+    # HARD DISQUALIFIER: Fictional Companies (Immediate Honeypot)
+    for job in career:
+        company = (job.get("company") or "").lower().strip()
+        if company in FICTIONAL_COMPANIES:
+            return True
+
     # Check for impossible skill durations (time-traveling skills)
     for skill in skills:
         skill_name = skill.get("name", "").lower()
@@ -165,10 +171,6 @@ def _is_honeypot(candidate: dict) -> bool:
     chrono_violations = 0
 
     for job in career:
-        company = (job.get("company") or "").lower()
-        if company in FICTIONAL_COMPANIES:
-            chrono_violations += 1
-
         start = job.get("start_date", "")
         end = job.get("end_date", "")
         claimed_months = job.get("duration_months", 0)
@@ -261,14 +263,42 @@ def label_candidate(candidate: dict) -> int:
         return 0
 
     profile = candidate.get("profile", {})
+    signals = candidate.get("redrob_signals", {})
+    
+    # 1. GEOGRAPHIC COMPLIANCE CHECK
+    location = (profile.get("location") or "").lower()
+    willing_to_relocate = signals.get("willing_to_relocate", True)
+    
+    # Noida/Pune/NCR/Tier-1 cities list
+    tier1_cities = ["noida", "pune", "delhi", "ncr", "bangalore", "bengaluru", "hyderabad", "mumbai", "gurgaon", "ghaziabad", "faridabad"]
+    is_in_tier1 = any(city in location for city in tier1_cities)
+    
+    # If not in target city and unwilling to relocate, disqualify (Tier 0)
+    if not is_in_tier1 and not willing_to_relocate:
+        return 0
+        
+    # Check for international candidates who are unwilling to relocate
+    international_markers = ["usa", "united states", "london", "uk", "sf", "california", "germany", "canada"]
+    is_international = any(marker in location for marker in international_markers)
+    if is_international and not willing_to_relocate:
+        return 0
+
     title = (profile.get("current_title") or "").lower()
     headline = (profile.get("headline") or "").lower()
     yoe = profile.get("years_of_experience", 0)
     career_text = _get_career_text(candidate)
-    signals = candidate.get("redrob_signals", {})
+
+    # 2. LANGCHAIN WRAPPER CHECK
+    skills_list = {s.get("name", "").lower() for s in candidate.get("skills", [])}
+    has_langchain = "langchain" in skills_list or "langchain" in career_text.lower()
+    is_senior_ai = any(t in title or t in headline for t in SENIOR_AI_TITLES)
+    
+    # If they claim langchain but lack production ML titles or other deep skills, flag as wrapper
+    is_wrapper = False
+    if has_langchain and not is_senior_ai and len(skills_list) < 5:
+        is_wrapper = True
 
     # Title classification
-    is_senior_ai = any(t in title or t in headline for t in SENIOR_AI_TITLES)
     is_adjacent = any(t in title or t in headline for t in ADJACENT_TITLES)
     is_wrong = any(t in title or t in headline for t in WRONG_DOMAIN_TITLES)
 
@@ -340,7 +370,10 @@ def label_candidate(candidate: dict) -> int:
     if not signals.get("open_to_work_flag", True) and response_rate is not None and response_rate < 0.50:
         demotion += 1
 
-    return max(0, base_tier - demotion)
+    final_tier = max(0, base_tier - demotion)
+    if is_wrapper:
+        return min(1, final_tier)  # Cap wrapper candidate to Tier 1 maximum
+    return final_tier
 
 
 def main():
