@@ -252,6 +252,43 @@ def _has_production_depth(text: str) -> bool:
     return sum(1 for m in prod_markers if m in text) >= 2
 
 
+def is_senior_ai_title(title_str: str, headline_str: str) -> bool:
+    t = (title_str.lower() + " " + headline_str.lower()).strip()
+    if not t:
+        return False
+    # Core AI titles
+    if any(kw in t for kw in ["machine learning", "ml engineer", "applied scientist", "data scientist", "nlp scientist", "applied ml"]):
+        return True
+    # Search / Ranking / Recommendation / Retrieval titles
+    if any(kw in t for kw in ["search", "ranking", "recommend", "retrieval"]):
+        if any(role in t for role in ["engineer", "scientist", "developer", "lead", "staff", "senior", "specialist"]):
+            return True
+    # AI roles
+    if "ai " in t or " ai" in t or "artificial intelligence" in t:
+        if any(role in t for role in ["engineer", "scientist", "developer", "lead", "staff", "senior", "researcher"]):
+            return True
+    # Specific senior roles
+    if "nlp engineer" in t or "senior nlp" in t or "research engineer" in t:
+        return True
+    return False
+
+
+def is_adjacent_title(title_str: str, headline_str: str) -> bool:
+    t = (title_str.lower() + " " + headline_str.lower()).strip()
+    if not t:
+        return False
+    adjacent_roles = ["software engineer", "backend engineer", "data engineer", "full stack", "platform engineer", "developer", "systems engineer", "programmer"]
+    return any(role in t for role in adjacent_roles)
+
+
+def is_wrong_title(title_str: str, headline_str: str) -> bool:
+    t = (title_str.lower() + " " + headline_str.lower()).strip()
+    if not t:
+        return False
+    wrong_roles = ["hr manager", "marketing", "sales", "content writer", "graphic designer", "accountant", "financial", "operations", "mechanical", "civil", "electrical", "business analyst", "project manager", "product manager", "support", "success", "recruiter", "teacher", "professor", "lawyer", "doctor", "nurse"]
+    return any(role in t for role in wrong_roles)
+
+
 def label_candidate(candidate: dict) -> int:
     """Assign a relevance tier 0-4 to a candidate.
     
@@ -264,17 +301,22 @@ def label_candidate(candidate: dict) -> int:
 
     profile = candidate.get("profile", {})
     signals = candidate.get("redrob_signals", {})
+    career_history = candidate.get("career_history", [])
     
     # 1. GEOGRAPHIC COMPLIANCE CHECK
     location = (profile.get("location") or "").lower()
     willing_to_relocate = signals.get("willing_to_relocate", True)
     
-    # Noida/Pune/NCR/Tier-1 cities list
-    tier1_cities = ["noida", "pune", "delhi", "ncr", "bangalore", "bengaluru", "hyderabad", "mumbai", "gurgaon", "ghaziabad", "faridabad"]
-    is_in_tier1 = any(city in location for city in tier1_cities)
+    # Target cities Noida/Pune/Delhi NCR
+    target_cities = ["noida", "pune", "delhi", "ncr", "gurgaon", "ghaziabad", "faridabad"]
+    is_target_local = any(city in location for city in target_cities)
     
-    # If not in target city and unwilling to relocate, disqualify (Tier 0)
-    if not is_in_tier1 and not willing_to_relocate:
+    # Approved Remote Cities (from JD L48)
+    approved_remote_cities = ["hyderabad", "mumbai"]
+    is_approved_remote = any(city in location for city in approved_remote_cities)
+    
+    # If not in target city and not in approved remote city, relocation MUST be True
+    if not is_target_local and not is_approved_remote and not willing_to_relocate:
         return 0
         
     # Check for international candidates who are unwilling to relocate
@@ -288,23 +330,46 @@ def label_candidate(candidate: dict) -> int:
     yoe = profile.get("years_of_experience", 0)
     career_text = _get_career_text(candidate)
 
-    # 2. LANGCHAIN WRAPPER CHECK
+    # 2. CONSULTING-ONLY CAREER CHECK
+    career_companies = [j.get("company", "").lower().strip() for j in career_history if j.get("company")]
+    if career_companies:
+        consulting_firms = ["tcs", "infosys", "wipro", "accenture", "cognizant", "capgemini", "tata consultancy"]
+        all_consulting = all(any(c in comp for c in consulting_firms) for comp in career_companies)
+        if all_consulting:
+            return 0  # Disqualified if entire career is consulting
+
+    # 3. CV/SPEECH/ROBOTICS EXCLUSION CHECK
+    wrong_specialization_keywords = ["computer vision", " cv ", "vision engineer", "speech engineer", "audio engineer", "robotics", "perception engineer"]
+    is_wrong_spec = any(kw in title or kw in headline for kw in wrong_specialization_keywords)
     skills_list = {s.get("name", "").lower() for s in candidate.get("skills", [])}
+    if is_wrong_spec:
+        has_nlp_ir = any(kw in career_text.lower() or kw in str(skills_list).lower() for kw in ["nlp", "natural language", "retrieval", "search", "ranking", "bm25", "faiss", "embedding"])
+        if not has_nlp_ir:
+            return 0  # Disqualified if wrong specialization and no NLP/IR work
+
+    # 4. PURE RESEARCH / ACADEMIC CHECK
+    academic_keywords = ["university", "institute", "college", "research lab", "academy"]
+    all_academic = True
+    for job in career_history:
+        company = (job.get("company") or "").lower()
+        if company and not any(kw in company for kw in academic_keywords):
+            all_academic = False
+            break
+    has_real_systems = _describes_real_systems(career_text)
+    has_production = _has_production_depth(career_text)
+    if all_academic and len(career_history) > 0 and not has_production:
+        return 0  # Disqualified if pure research and no production ML work
+
+    # 5. LANGCHAIN WRAPPER CHECK
     has_langchain = "langchain" in skills_list or "langchain" in career_text.lower()
-    is_senior_ai = any(t in title or t in headline for t in SENIOR_AI_TITLES)
-    
-    # If they claim langchain but lack production ML titles or other deep skills, flag as wrapper
+    is_senior_ai = is_senior_ai_title(title, headline)
     is_wrapper = False
     if has_langchain and not is_senior_ai and len(skills_list) < 5:
         is_wrapper = True
 
     # Title classification
-    is_adjacent = any(t in title or t in headline for t in ADJACENT_TITLES)
-    is_wrong = any(t in title or t in headline for t in WRONG_DOMAIN_TITLES)
-
-    # Career evidence
-    has_real_systems = _describes_real_systems(career_text)
-    has_production = _has_production_depth(career_text)
+    is_adjacent = is_adjacent_title(title, headline)
+    is_wrong = is_wrong_title(title, headline)
 
     # Experience band checks
     in_sweet_spot = 5.0 <= yoe <= 9.0
@@ -353,7 +418,6 @@ def label_candidate(candidate: dict) -> int:
             from datetime import datetime
             clean_date = str(last_active)[:10]
             last_date = datetime.strptime(clean_date, "%Y-%m-%d")
-            # Calculate months between last_date and reference date 2026-06-27
             ref_date = datetime(2026, 6, 27)
             months_inactive = (ref_date.year - last_date.year) * 12 + (ref_date.month - last_date.month)
             if months_inactive > 6:
@@ -369,6 +433,39 @@ def label_candidate(candidate: dict) -> int:
     # C. Not Open To Work + Low Engagement
     if not signals.get("open_to_work_flag", True) and response_rate is not None and response_rate < 0.50:
         demotion += 1
+
+    # D. Job Hopper / Title Chaser check
+    job_durations = [j.get("duration_months", 0) for j in career_history if j.get("duration_months")]
+    if len(job_durations) >= 3:
+        avg_tenure = sum(job_durations) / len(job_durations)
+        if avg_tenure < 18.0:
+            demotion += 1  # Demote 1 tier for job hopping
+
+    # E. Notice Period Check
+    notice_days = signals.get("notice_period_days", 0)
+    if notice_days > 30:
+        if notice_days > 60:
+            demotion += 2  # Demote 2 tiers for notice period > 60 days
+        else:
+            demotion += 1  # Demote 1 tier for notice period 31-60 days
+
+    # F. Verification Status Check
+    verified_email = signals.get("verified_email", True)
+    verified_phone = signals.get("verified_phone", True)
+    linkedin_connected = signals.get("linkedin_connected", True)
+    unverified_count = sum([not verified_email, not verified_phone, not linkedin_connected])
+    if unverified_count >= 2:
+        demotion += 1  # Demote 1 tier if multiple validation links are missing
+
+    # G. Interview Completion Rate Check
+    completion_rate = signals.get("interview_completion_rate")
+    if completion_rate is not None and completion_rate < 0.60:
+        demotion += 1  # Demote for flaking on interviews
+
+    # H. Offer Acceptance Rate Check
+    acceptance_rate = signals.get("offer_acceptance_rate")
+    if acceptance_rate == 0.0:
+        demotion += 1  # Demote for declining all previous offers
 
     final_tier = max(0, base_tier - demotion)
     if is_wrapper:

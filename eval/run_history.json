@@ -269,6 +269,54 @@
         "gems_in_top100": 6
       },
       "notes": ""
+    },
+    {
+      "name": "fully_aligned_gold_run",
+      "timestamp": "2026-06-28T00:45:11.598601",
+      "metrics": {
+        "NDCG@10": 0.5770595045206525,
+        "NDCG@50": 0.515694309144898,
+        "MAP": 0.4018086460662182,
+        "P@10": 0.9,
+        "P@5": 1.0,
+        "composite": 0.5485093419137284
+      },
+      "honeypot_stats": {
+        "total_honeypots": 460,
+        "honeypots_in_top100": 0,
+        "honeypot_rate": 0.0
+      },
+      "reasoning_score": 1.0,
+      "gem_stats": {
+        "total_gems": 131,
+        "gems_in_top10": 0,
+        "gems_in_top100": 6
+      },
+      "notes": ""
+    },
+    {
+      "name": "fully_aligned_gold_run_v2",
+      "timestamp": "2026-06-28T00:56:41.081913",
+      "metrics": {
+        "NDCG@10": 0.5770595045206525,
+        "NDCG@50": 0.5217588265251843,
+        "MAP": 0.44341958044200575,
+        "P@10": 0.9,
+        "P@5": 1.0,
+        "composite": 0.5565703372841825
+      },
+      "honeypot_stats": {
+        "total_honeypots": 460,
+        "honeypots_in_top100": 0,
+        "honeypot_rate": 0.0
+      },
+      "reasoning_score": 1.0,
+      "gem_stats": {
+        "total_gems": 131,
+        "gems_in_top10": 0,
+        "gems_in_top100": 6
+      },
+      "notes": ""
     }
   ]
 }
