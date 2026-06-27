@@ -36,11 +36,11 @@ def reciprocal_rank_fusion(
     """
     if dimension_weights is None:
         dimension_weights = {
-            "skill": 1.0,
-            "career": 1.0,
-            "behavioral": 0.8,
-            "trust": 1.2,  # Trust gets slight boost — our core differentiator
-            "semantic": 0.6,  # Supplementary — catches natural language matches
+            "skill": 1.6,
+            "career": 0.4,
+            "behavioral": 0.2,
+            "trust": 0.8,
+            "semantic": 1.0,
         }
     
     rrf_scores: dict[str, float] = {}

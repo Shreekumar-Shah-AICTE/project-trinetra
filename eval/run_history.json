@@ -47,6 +47,78 @@
         "gems_in_top100": 1
       },
       "notes": "Added Level 4 external integrations to candidate details and control sidebar settings"
+    },
+    {
+      "name": "v3_metadata",
+      "timestamp": "2026-06-27T14:12:39.492147",
+      "metrics": {
+        "NDCG@10": 0.26386772277687637,
+        "NDCG@50": 0.25576544310682725,
+        "MAP": 0.09090909090909091,
+        "P@10": 0.0,
+        "P@5": 0.0,
+        "composite": 0.22229985795685
+      },
+      "honeypot_stats": {
+        "total_honeypots": 0,
+        "honeypots_in_top100": 0,
+        "honeypot_rate": 0.0
+      },
+      "reasoning_score": 1.0,
+      "gem_stats": {
+        "total_gems": 1,
+        "gems_in_top10": 1,
+        "gems_in_top100": 1
+      },
+      "notes": "Created submission_metadata.yaml at root"
+    },
+    {
+      "name": "v3_full_dataset",
+      "timestamp": "2026-06-27T15:29:23.926798",
+      "metrics": {
+        "NDCG@10": 0.6516769989823363,
+        "NDCG@50": 0.5627867379627681,
+        "MAP": 0.0036766055896112876,
+        "P@10": 0.6,
+        "P@5": 0.4,
+        "composite": 0.5252260117184403
+      },
+      "honeypot_stats": {
+        "total_honeypots": 11,
+        "honeypots_in_top100": 0,
+        "honeypot_rate": 0.0
+      },
+      "reasoning_score": 1.0,
+      "gem_stats": {
+        "total_gems": 161,
+        "gems_in_top10": 1,
+        "gems_in_top100": 11
+      },
+      "notes": "Run validation against the full 100K candidate dataset"
+    },
+    {
+      "name": "v4_optimized_rrf",
+      "timestamp": "2026-06-27T15:46:44.377292",
+      "metrics": {
+        "NDCG@10": 0.95818758987804,
+        "NDCG@50": 0.8773861884340683,
+        "MAP": 0.004882874030716058,
+        "P@10": 1.0,
+        "P@5": 1.0,
+        "composite": 0.7930420825738479
+      },
+      "honeypot_stats": {
+        "total_honeypots": 11,
+        "honeypots_in_top100": 0,
+        "honeypot_rate": 0.0
+      },
+      "reasoning_score": 1.0,
+      "gem_stats": {
+        "total_gems": 161,
+        "gems_in_top10": 0,
+        "gems_in_top100": 11
+      },
+      "notes": "Full run on 100K candidates using optimal weights w_skill=1.6, w_career=0.4, w_behavioral=0.2, w_trust=0.8, w_semantic=1.0"
     }
   ]
 }

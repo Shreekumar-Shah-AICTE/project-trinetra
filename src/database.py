@@ -126,7 +126,7 @@ def save_pipeline_run(
 ) -> str:
     """
     Save all processed metrics, candidate data, violations, and final RRF ranks
-    to the 5 tables in the SQLite database.
+    to the 5 tables in the SQLite database using fast batch inserts (executemany).
     
     Returns the generated run_id.
     """
@@ -156,78 +156,104 @@ def save_pipeline_run(
     rank_lookup = {cid: (rank, score) for rank, (cid, score) in enumerate(fused_ranking, 1)}
     reasoning_lookup = {row["candidate_id"]: row["reasoning"] for row in output_rows}
 
-    # 2. Insert candidates, violations, scores, and rankings
+    # Prepare batches
+    candidates_batch = []
+    violations_batch = []
+    scores_batch = []
+    rankings_batch = []
+    
+    all_cids = [c["candidate_id"] for c in candidates]
+    
     for cand in candidates:
         cid = cand["candidate_id"]
         profile = cand.get("profile", {})
         guard = guard_results[cid]
         
-        # Save or update candidate
-        cursor.execute(
-            """
-            INSERT OR REPLACE INTO candidates (
-                candidate_id, anonymized_name, current_title, current_company, 
-                years_of_experience, trust_grade, is_honeypot, disqualified, last_updated
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);
-            """,
-            (
-                cid,
-                profile.get("anonymized_name", "Anonymized"),
-                profile.get("current_title", "Unknown"),
-                profile.get("current_company", "Unknown"),
-                profile.get("years_of_experience", 0.0),
-                guard["trust_grade"],
-                1 if guard["is_hard_honeypot"] else 0,
-                1 if guard["disqualified"] else 0,
-                timestamp,
-            ),
-        )
-
-        # Clear existing violations for candidate to avoid duplication
-        cursor.execute("DELETE FROM violations WHERE candidate_id = ?;", (cid,))
+        candidates_batch.append((
+            cid,
+            profile.get("anonymized_name", "Anonymized"),
+            profile.get("current_title", "Unknown"),
+            profile.get("current_company", "Unknown"),
+            profile.get("years_of_experience", 0.0),
+            guard["trust_grade"],
+            1 if guard["is_hard_honeypot"] else 0,
+            1 if guard["disqualified"] else 0,
+            timestamp,
+        ))
         
-        # Save violations
         for violation in guard["violations"]:
-            cursor.execute(
-                """
-                INSERT INTO violations (candidate_id, violation_text, severity)
-                VALUES (?, ?, ?);
-                """,
-                (cid, violation, "high" if guard["is_hard_honeypot"] else "medium"),
-            )
-
-        # Save scores (if the candidate survived and was scored)
+            violations_batch.append((
+                cid,
+                violation,
+                "high" if guard["is_hard_honeypot"] else "medium"
+            ))
+            
         if cid in scored_lookup:
             sc = scored_lookup[cid]
-            cursor.execute(
-                """
-                INSERT OR REPLACE INTO scores (
-                    candidate_id, skill_relevance, career_trajectory, 
-                    behavioral_availability, trust_score, semantic_fit
-                ) VALUES (?, ?, ?, ?, ?, ?);
-                """,
-                (
-                    cid,
-                    sc["skill_relevance_score"],
-                    sc["career_score"],
-                    sc["behavioral_score"],
-                    sc["trust_rank_score"],
-                    sc["semantic_score"],
-                ),
-            )
-
-        # Save ranking (if in top 100 / fused ranks)
+            scores_batch.append((
+                cid,
+                sc["skill_relevance_score"],
+                sc["career_score"],
+                sc["behavioral_score"],
+                sc["trust_rank_score"],
+                sc["semantic_score"],
+            ))
+            
         if cid in rank_lookup:
             rank_pos, score = rank_lookup[cid]
             reasoning = reasoning_lookup.get(cid, "")
-            cursor.execute(
-                """
-                INSERT OR REPLACE INTO rankings (candidate_id, run_id, rank_position, rrf_score, reasoning)
-                VALUES (?, ?, ?, ?, ?);
-                """,
-                (cid, run_id, rank_pos, score, reasoning),
-            )
-
+            rankings_batch.append((
+                cid,
+                run_id,
+                rank_pos,
+                score,
+                reasoning,
+            ))
+            
+    # Delete old violations in chunks to prevent SQLite parameter limits
+    chunk_size = 900
+    for i in range(0, len(all_cids), chunk_size):
+        chunk = all_cids[i:i+chunk_size]
+        placeholders = ",".join(["?"] * len(chunk))
+        cursor.execute(f"DELETE FROM violations WHERE candidate_id IN ({placeholders});", chunk)
+        
+    # Execute fast batch insertions
+    cursor.executemany(
+        """
+        INSERT OR REPLACE INTO candidates (
+            candidate_id, anonymized_name, current_title, current_company, 
+            years_of_experience, trust_grade, is_honeypot, disqualified, last_updated
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);
+        """,
+        candidates_batch
+    )
+    
+    cursor.executemany(
+        """
+        INSERT INTO violations (candidate_id, violation_text, severity)
+        VALUES (?, ?, ?);
+        """,
+        violations_batch
+    )
+    
+    cursor.executemany(
+        """
+        INSERT OR REPLACE INTO scores (
+            candidate_id, skill_relevance, career_trajectory, 
+            behavioral_availability, trust_score, semantic_fit
+        ) VALUES (?, ?, ?, ?, ?, ?);
+        """,
+        scores_batch
+    )
+    
+    cursor.executemany(
+        """
+        INSERT OR REPLACE INTO rankings (candidate_id, run_id, rank_position, rrf_score, reasoning)
+        VALUES (?, ?, ?, ?, ?);
+        """,
+        rankings_batch
+    )
+    
     conn.commit()
     conn.close()
     return run_id

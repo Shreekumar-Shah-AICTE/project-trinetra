@@ -325,11 +325,11 @@ k_val = st.sidebar.slider(
 )
 
 st.sidebar.markdown("#### Dimension Weights")
-w_trust = st.sidebar.slider("Trust Grade (Eye 1)", 0.0, 2.0, 1.2, 0.1)
-w_skill = st.sidebar.slider("Skill Relevance (Eye 2)", 0.0, 2.0, 1.0, 0.1)
-w_career = st.sidebar.slider("Career Trajectory", 0.0, 2.0, 1.0, 0.1)
-w_behavioral = st.sidebar.slider("Behavioral Signals", 0.0, 2.0, 0.8, 0.1)
-w_semantic = st.sidebar.slider("TF-IDF Semantic Fit", 0.0, 2.0, 0.6, 0.1)
+w_trust = st.sidebar.slider("Trust Grade (Eye 1)", 0.0, 2.0, 0.8, 0.1)
+w_skill = st.sidebar.slider("Skill Relevance (Eye 2)", 0.0, 2.0, 1.6, 0.1)
+w_career = st.sidebar.slider("Career Trajectory", 0.0, 2.0, 0.4, 0.1)
+w_behavioral = st.sidebar.slider("Behavioral Signals", 0.0, 2.0, 0.2, 0.1)
+w_semantic = st.sidebar.slider("TF-IDF Semantic Fit", 0.0, 2.0, 1.0, 0.1)
 
 dim_weights = {
     "trust": w_trust,
