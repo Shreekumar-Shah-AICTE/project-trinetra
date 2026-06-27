@@ -1,0 +1,59 @@
+# ============================================================================
+# Project Trinetra (त्रिनेत्र) — Submission Metadata
+# ============================================================================
+
+team_name: "Project Trinetra"
+
+primary_contact:
+  name: "Shreekumar Shah"
+  email: "parzivalarts@gmail.com"
+  phone: "+91-XXXXXXXXXX"        # TODO: Replace with your registered phone number
+
+team_members:
+  - name: "Shreekumar Shah"
+    email: "parzivalarts@gmail.com"
+    role: "Hiring Forensics Architect"
+
+# Code and reproducibility
+github_repo: "https://github.com/Shreekumar-Shah-AICTE/project-trinetra"
+sandbox_link: "https://project-trinetra.streamlit.app"  # Streamlit Community Cloud URL
+reproduce_command: "python src/rank.py --candidates ./data/sample_candidates.json --out ./submission.csv"
+
+# Compute environment
+compute:
+  platform: "Local Windows PC"
+  cpu_cores: 8
+  ram_gb: 16
+  python_version: "3.13.4"
+  os: "Windows 11"
+  uses_gpu_for_inference: false
+  has_network_during_ranking: false
+  pre_computation_required: false
+  pre_computation_time_minutes: 0
+
+# AI tools declaration
+ai_tools_used:
+  - "Gemini"
+  - "Cursor"
+
+ai_usage_summary: |
+  Used Gemini for code auditing, writing the self-validation suite, and architecture refactoring.
+  All candidate parsing, Guard Gate integrity filters, and RRF rank fusion logic are implemented
+  entirely as deterministic, non-AI Python code.
+
+# Approach summary
+methodology_summary: |
+  Trinetra is a trust-first talent forensics engine built for the Redrob AI challenge.
+  It screens out synthetic honeypots and IT services-only profiles in Stage 1 (Guard Gate),
+  scores surviving profiles across 5 orthogonal dimensions (Skill, Career, Behavior, Trust, Semantic)
+  in Stage 2, and fuses the rank lists using Reciprocal Rank Fusion (RRF) in Stage 3 to ensure
+  mathematical robustness and immunity to hidden-test overfitting.
+
+# Declarations
+declarations:
+  read_submission_spec: true
+  code_is_original_work: true
+  no_collusion: true
+  honeypot_check_done: true
+  reproduction_tested: true
+  submission_ready: true
