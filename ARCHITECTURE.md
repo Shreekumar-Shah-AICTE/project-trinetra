@@ -55,7 +55,7 @@ The Guard Gate filters out invalid profiles and assigns a **Trust Grade (A, B, C
 ### 👁️ Stage 2: Multi-Dimensional Scoring (Eye 2 — Independence)
 Instead of collapsing all features into a single weighted score, Trinetra ranks candidates across **5 orthogonal dimensions**:
 1.  **Skill Relevance**: Source-weighted keyword matching. Career descriptions carry a weight of `1.0`, current titles `0.85`, headlines/summaries `0.45`, and self-reported skill names `0.25`.
-2.  **Career Trajectory**: Evaluates Years of Experience (YOE) sweet-spot fit (5–9 years), tenure stability (penalizes frequent switching under 1.5 years), progressive seniority (e.g., "Senior", "Lead" promotions), product company exposure ratio, and target geographic fit (Pune/Noida).
+2.  **Career Trajectory**: Evaluates Years of Experience (YOE) sweet-spot fit (5–9 years), tenure stability (penalizes frequent switching under 1.5 years), **Career Velocity Index (CVI)** (calculates promotion acceleration speed and company caliber transition slope), and target geographic fit (Pune/Noida).
 3.  **Behavioral Availability**: Processes Redrob's 23 behavioral signals. Combines notice period (prefers sub-30 days), activity recency (`last_active_date`), response rates, interview completion metrics, and contact verification.
 4.  **Trust Rank**: Pass-through of the Guard Gate's trust score. Candidates with a Grade of F or severe penalties are pushed down the ranking.
 5.  **Semantic Fit**: Batch TF-IDF cosine similarity between candidate profiles and a synthetically expanded Job Description query containing key phrases and weighted concepts.
@@ -67,8 +67,13 @@ Fuses the 5 independent dimension rank lists into a single consolidated ranking.
 *   **Where**:
     *   $M$ represents the 5 dimensions.
     *   $k = 60$ (standard smoothing constant to prevent top-rank bias).
-    *   $w_m$ represents tuned dimension weights: `skill = 1.0`, `career = 1.0`, `behavioral = 0.5`, `trust = 0.8`, `semantic = 1.0`.
-*   RRF eliminates the fragility of hand-tuned weight combinations, offering robust mathematical generalization.
+    *   $w_m$ represents tuned dimension weights: `skill = 1.6`, `career = 1.0`, `behavioral = 1.0`, `trust = 1.2`, `semantic = 0.2` (optimized by the hyperparameter tuner).
+*   **Trust Alignment Multiplier**: To align RRF output with strict behavioral rules, we apply a **Trust Grade Scaling Multiplier** to the raw RRF score before final ranking sorting:
+    *   *Grade A*: 1.00
+    *   *Grade B*: 0.85 (minor behavioral flaws like short tenure or missing contact verification)
+    *   *Grade C*: 0.40 (notice period > 30 days or low recruiter response rates)
+    *   *Grade D*: 0.10 (severe behavioral anomalies)
+    *   *Grade F*: 0.00 (disqualified or honeypot)
 *   **Tie-Breaking**: Ties in RRF scores are resolved deterministically by `candidate_id` ascending (lexicographical order), ensuring valid formatting.
 
 ### ✍️ Stage 4: Forensic Reasoning Chain
