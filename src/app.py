@@ -27,6 +27,12 @@ from src.rankers import (
 from src.fusion import build_dimension_ranks, reciprocal_rank_fusion
 from src.reasoning import build_reasoning
 from src.semantic import compute_semantic_scores
+from src.integrations import (
+    send_slack_alert,
+    send_candidate_email,
+    fetch_github_profile,
+    compare_candidate_ranks,
+)
 
 # Set Page Config
 st.set_page_config(
@@ -332,6 +338,13 @@ dim_weights = {
     "behavioral": w_behavioral,
     "semantic": w_semantic,
 }
+
+# ── Integrations Settings ──
+st.sidebar.markdown("### 🔌 Integrations Config")
+with st.sidebar.expander("Slack & Resend Settings"):
+    slack_webhook = st.text_input("Slack Webhook URL", value="", type="password", help="Incoming webhook URL to send candidate alerts.")
+    resend_key = st.text_input("Resend API Key", value="", type="password", help="Resend API key to send live candidate emails.")
+    github_token = st.text_input("GitHub Token (Optional)", value="", type="password", help="GitHub personal access token to avoid rate limits.")
 
 # ── Execution Archive (SQLite 5-Table History) ──
 try:
@@ -921,6 +934,137 @@ if data_loaded:
                     st.write(f"- **Email Address**: {vemail}")
                     st.write(f"- **Phone Number**: {vphone}")
                     st.write(f"- **LinkedIn Link**: {vlinkedin}")
+                
+                # ── ACTION CENTER (INTEGRATIONS) ──
+                st.markdown("<hr style='border-top: 1px solid rgba(255,255,255,0.08); margin: 25px 0 15px 0;'/>", unsafe_allow_html=True)
+                st.markdown("### 🔌 Forensics Integration Action Center")
+                
+                # Split actions into columns
+                col_slack, col_email, col_github, col_db = st.columns(4)
+                
+                with col_slack:
+                    if st.button("💬 Alert Team on Slack", key=f"slack_{selected_id}", use_container_width=True):
+                        with st.spinner("Posting to Slack..."):
+                            success, msg, payload = send_slack_alert(
+                                webhook_url=slack_webhook,
+                                candidate_id=selected_id,
+                                name=cand_row['name'],
+                                rank=cand_row['rank'],
+                                score=cand_row['score'],
+                                trust_grade=grade,
+                                reasoning=cand_row['reasoning']
+                            )
+                            if success:
+                                st.success("Slack alert triggered successfully!")
+                                if not slack_webhook:
+                                    st.info("Simulated Mode: Showing Block Kit JSON Payload:")
+                                    st.json(payload)
+                                else:
+                                    st.write(msg)
+                            else:
+                                st.error(msg)
+                                
+                with col_email:
+                    if st.button("✉️ Invite to Interview", key=f"email_{selected_id}", use_container_width=True):
+                        with st.spinner("Preparing email..."):
+                            # Mock recipient email
+                            c_email = f"{cand_row['name'].lower().replace(' ', '.')}@example.com"
+                            subject = f"Interview Invitation: Founding AI Team at Redrob AI"
+                            body_html = f"""
+                            <p>Dear {cand_row['name']},</p>
+                            <p>We have reviewed your profile and career history using our **Trinetra Forensics Engine**, and we are extremely impressed by your experience.</p>
+                            <p>Specifically, your background in building search, retrieval, or machine learning systems aligns perfectly with our core requirements.</p>
+                            <p>We would love to invite you for a 30-minute technical conversation to discuss the Founding Team roles at Redrob AI.</p>
+                            <p>Please let us know your availability over the next few days.</p>
+                            <p>Best regards,<br/>The Redrob AI Hiring Team</p>
+                            """
+                            success, msg, payload = send_candidate_email(
+                                api_key=resend_key,
+                                candidate_id=selected_id,
+                                candidate_name=cand_row['name'],
+                                candidate_email=c_email,
+                                subject=subject,
+                                email_body_html=body_html
+                            )
+                            if success:
+                                st.success("Email sent / simulated successfully!")
+                                if not resend_key:
+                                    st.info("Simulated Mode: Showing Sent Email Envelope:")
+                                    st.json(payload)
+                                    with st.expander("👁️ View Email HTML Preview"):
+                                        st.components.v1.html(payload["html"], height=250, scrolling=True)
+                                else:
+                                    st.write(msg)
+                            else:
+                                st.error(msg)
+                                
+                with col_github:
+                    if st.button("🐙 Inspect GitHub", key=f"github_{selected_id}", use_container_width=True):
+                        # Construct a mock username from candidate name
+                        username_guess = cand_row['name'].lower().replace(' ', '')
+                        with st.spinner(f"Querying GitHub for @{username_guess}..."):
+                            profile = fetch_github_profile(username_guess, token=github_token)
+                            st.session_state[f"github_profile_{selected_id}"] = profile
+                            st.success("GitHub profile loaded!")
+                            
+                with col_db:
+                    if st.button("🔄 SQLite Run Compare", key=f"db_compare_{selected_id}", use_container_width=True):
+                        with st.spinner("Checking SQLite history..."):
+                            comp_res = compare_candidate_ranks(
+                                candidate_id=selected_id,
+                                current_rank=cand_row['rank'],
+                                current_score=cand_row['score']
+                            )
+                            st.session_state[f"db_compare_{selected_id}"] = comp_res
+                            
+                # Show GitHub Profile card if loaded
+                if f"github_profile_{selected_id}" in st.session_state:
+                    p = st.session_state[f"github_profile_{selected_id}"]
+                    st.markdown("---")
+                    st.markdown(f"#### 🐙 GitHub Stats: @{p['login']} (`{p['source']}`)")
+                    
+                    g_col1, g_col2, g_col3, g_col4 = st.columns(4)
+                    with g_col1:
+                        st.metric("Public Repos", p["public_repos"])
+                    with g_col2:
+                        st.metric("Stars Accum.", p["stars"])
+                    with g_col3:
+                        st.metric("Forks", p["forks"])
+                    with g_col4:
+                        st.metric("Followers", p["followers"])
+                        
+                    st.write(f"**Bio:** {p['bio']}")
+                    st.write(f"**Top Languages:** {', '.join(p['top_languages'])}")
+                    
+                    with st.expander("📁 View Recent Repositories"):
+                        for repo in p["recent_repos"]:
+                            st.markdown(
+                                f"""
+                                <div style="padding: 10px; border-bottom: 1px solid rgba(255,255,255,0.05);">
+                                    <div style="font-weight:600;"><a href="{repo['url']}" target="_blank" style="color:#00E5CC; text-decoration:none;">{repo['name']}</a> ⭐ {repo['stars']}</div>
+                                    <div style="font-size:0.85em; color:#8F9CAE;">Language: {repo['language']}</div>
+                                    <p style="font-size:0.85em; margin: 4px 0 0 0; color:#A8B2C1;">{repo['description']}</p>
+                                </div>
+                                """,
+                                unsafe_allow_html=True
+                            )
+                            
+                # Show SQLite Run Comparison if loaded
+                if f"db_compare_{selected_id}" in st.session_state:
+                    res = st.session_state[f"db_compare_{selected_id}"]
+                    st.markdown("---")
+                    st.markdown("#### 🔄 SQLite Historical Run Delta")
+                    if res["status"] == "success":
+                        st.write(f"**Previous Run:** {res['prev_run_timestamp'][:16].replace('T', ' ')} (Dataset: `{res['prev_dataset']}`)")
+                        c_col1, c_col2, c_col3 = st.columns(3)
+                        with c_col1:
+                            st.metric("Previous Rank", f"#{res['prev_rank']}", delta=f"{res['rank_delta']} ranks" if res['rank_delta'] != 0 else None, delta_color="inverse")
+                        with c_col2:
+                            st.metric("Current Rank", f"#{cand_row['rank']}")
+                        with c_col3:
+                            st.metric("Rank Status", res["status_text"])
+                    else:
+                        st.info(res["message"])
                 
                 # End card wrapper
                 st.markdown("</div>", unsafe_allow_html=True)
