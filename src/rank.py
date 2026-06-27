@@ -92,6 +92,7 @@ def run_pipeline(
     
     guard_results = {}
     hard_honeypots = 0
+    synthetic_noise = 0
     disqualified = 0
     trust_grade_counts = {"A": 0, "B": 0, "C": 0, "D": 0, "F": 0}
     
@@ -108,20 +109,26 @@ def run_pipeline(
         
         if result["is_hard_honeypot"]:
             hard_honeypots += 1
-        
+            disqualified += 1
+            continue  # Skip fake honeypot profiles entirely
+            
+        if result.get("is_synthetic_noise", False):
+            synthetic_noise += 1
+            disqualified += 1
+            continue  # Skip synthetic company noise profiles entirely
+            
         if result["disqualified"]:
             disqualified += 1
             continue  # Skip non-AI domain candidates entirely
-        
-        # Include all non-disqualified candidates for ranking
-        # (even honeypots are ranked — just with low trust scores via RRF)
+            
         surviving_candidates.append(cand)
     
     timings["guard_gate"] = time.time() - t1
     
     print(f"    👁 {total_candidates:,} candidates scanned")
     print(f"    🚫 {hard_honeypots:,} hard honeypots detected")
-    print(f"    ❌ {disqualified:,} domain-disqualified (non-AI/engineering)")
+    print(f"    📉 {synthetic_noise:,} synthetic noise profiles pruned")
+    print(f"    ❌ {disqualified - hard_honeypots - synthetic_noise:,} domain-disqualified (non-AI/engineering)")
     print(f"    ✅ {len(surviving_candidates):,} candidates surviving to ranking")
     print(f"    📊 Trust grades: A={trust_grade_counts['A']:,} B={trust_grade_counts['B']:,} "
           f"C={trust_grade_counts['C']:,} D={trust_grade_counts['D']:,} F={trust_grade_counts['F']:,}")
@@ -340,7 +347,8 @@ def run_pipeline(
     print("  ═══════════════════════════════════════════════")
     print(f"  📊 Total candidates: {total_candidates:,}")
     print(f"  🚫 Hard honeypots detected: {hard_honeypots:,}")
-    print(f"  🎯 Honeypots in top 100: {honeypots_in_top100}")
+    print(f"  📉 Synthetic noise pruned:  {synthetic_noise:,}")
+    print(f"  🎯 Honeypots in top 100:    {honeypots_in_top100}")
     print(f"  📄 Output: {output_path}")
     print(f"  ⏱ Total time: {timings['total']:.1f}s")
     

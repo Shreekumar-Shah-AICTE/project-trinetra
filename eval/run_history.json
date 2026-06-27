@@ -119,6 +119,30 @@
         "gems_in_top100": 11
       },
       "notes": "Full run on 100K candidates using optimal weights w_skill=1.6, w_career=0.4, w_behavioral=0.2, w_trust=0.8, w_semantic=1.0"
+    },
+    {
+      "name": "v5_hard_fictional",
+      "timestamp": "2026-06-27T17:22:58.596191",
+      "metrics": {
+        "NDCG@10": 0.9608725748803414,
+        "NDCG@50": 0.8742753352994607,
+        "MAP": 0.004891698908058569,
+        "P@10": 1.0,
+        "P@5": 1.0,
+        "composite": 0.7934526428662176
+      },
+      "honeypot_stats": {
+        "total_honeypots": 81524,
+        "honeypots_in_top100": 0,
+        "honeypot_rate": 0.0
+      },
+      "reasoning_score": 1.0,
+      "gem_stats": {
+        "total_gems": 161,
+        "gems_in_top10": 0,
+        "gems_in_top100": 11
+      },
+      "notes": "Full run on 100K candidates with fictional companies as hard honeypots and expanded blacklist"
     }
   ]
 }

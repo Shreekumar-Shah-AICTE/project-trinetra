@@ -167,6 +167,10 @@ NON_AI_HEADLINE_PATTERNS = [
     "architect", "interior designer",
     "chef", "hospitality", "hotel management",
     "real estate", "property", "insurance agent",
+    # Extra non-AI domains identified during LLM audit
+    "customer support", "support agent", "support executive", "customer success",
+    "operations manager", "operations executive", "business analyst",
+    "qa engineer", "test engineer", "software test", ".net developer", "dotnet developer",
 ]
 
 # CV/Speech/Robotics — JD says "not what we need" unless they also have NLP/IR
