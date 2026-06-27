@@ -114,6 +114,13 @@ FICTIONAL_COMPANIES = {
 }
 
 
+TECH_RELEASE_YEARS = {
+    "qlora": 2023, "llama-2": 2023, "llama 2": 2023, "bge embeddings": 2023, 
+    "langchain": 2022, "qdrant": 2021, "peft": 2023, "llama-3": 2024,
+    "llama 3": 2024, "mistral": 2023, "gpt-4": 2023, "chatgpt": 2022
+}
+
+
 def _is_honeypot(candidate: dict) -> bool:
     """Independent honeypot detection for the labeler.
     Uses simpler, high-confidence checks — not our full Guard Gate.
@@ -122,6 +129,38 @@ def _is_honeypot(candidate: dict) -> bool:
     career = candidate.get("career_history", [])
     skills = candidate.get("skills", [])
     ref_year = 2026
+
+    # Check for impossible skill durations (time-traveling skills)
+    for skill in skills:
+        skill_name = skill.get("name", "").lower()
+        claimed_months = skill.get("duration_months", 0)
+        
+        for tech, release_year in TECH_RELEASE_YEARS.items():
+            if tech in skill_name:
+                max_possible_months = (ref_year - release_year + 1) * 12
+                if claimed_months > max_possible_months:
+                    return True
+
+    # Time-travel checking
+    for job in career:
+        end_date = job.get("end_date")
+        if not end_date and job.get("is_current"):
+            end_year = 2026
+        elif end_date:
+            try:
+                end_year = int(end_date.split("-")[0])
+            except:
+                continue
+        else:
+            continue
+            
+        desc = (job.get("description") or "").lower()
+        title_job = (job.get("title") or "").lower()
+        full_job_text = desc + " " + title_job
+        
+        for tech, release_year in TECH_RELEASE_YEARS.items():
+            if tech in full_job_text and end_year < release_year:
+                return True
 
     chrono_violations = 0
 
@@ -195,8 +234,9 @@ def _get_career_text(candidate: dict) -> str:
 
 def _describes_real_systems(text: str) -> bool:
     """Does the career text show BUILDING relevant systems?"""
-    has_build = any(v in text for v in BUILD_VERBS)
-    has_sys = any(s in text for s in RELEVANT_SYSTEMS)
+    import re
+    has_build = any(re.search(r'\b' + re.escape(v) + r'\b', text) for v in BUILD_VERBS)
+    has_sys = any(re.search(r'\b' + re.escape(s) + r'\b', text) for s in RELEVANT_SYSTEMS)
     return has_build and has_sys
 
 
@@ -240,44 +280,67 @@ def label_candidate(candidate: dict) -> int:
     in_sweet_spot = 5.0 <= yoe <= 9.0
     in_acceptable = 4.0 <= yoe <= 11.0
 
-    # ── TIER 0: Definitively irrelevant ──
+    # Determine base tier
+    base_tier = 0
+
     if is_wrong and not has_real_systems:
+        base_tier = 0
+    elif is_senior_ai and has_real_systems and in_sweet_spot:
+        base_tier = 4
+    elif is_senior_ai and has_real_systems and in_acceptable:
+        base_tier = 3
+    elif is_senior_ai and in_sweet_spot:
+        base_tier = 3
+    elif is_senior_ai and has_real_systems:
+        base_tier = 3
+    elif is_adjacent and has_real_systems:
+        base_tier = 2
+    elif is_senior_ai and in_acceptable:
+        base_tier = 2
+    elif is_senior_ai:
+        base_tier = 2
+    elif has_real_systems and in_acceptable:
+        base_tier = 2
+    elif is_adjacent and in_acceptable:
+        base_tier = 1
+    elif is_adjacent:
+        base_tier = 1
+    elif is_wrong and has_real_systems:
+        base_tier = 1
+    else:
+        base_tier = 0
+
+    if base_tier == 0:
         return 0
 
-    # ── TIER 4: Textbook fit ──
-    if is_senior_ai and has_real_systems and in_sweet_spot:
-        if has_production:
-            return 4
-        return 4  # Systems evidence + right title + right YOE = tier 4
+    # ── BEHAVIORAL DEMOTIONS (Crucial for Hackathon alignment) ──
+    demotion = 0
+    
+    # A. Inactive for > 6 months
+    last_active = signals.get("last_active_date")
+    if last_active:
+        try:
+            from datetime import datetime
+            clean_date = str(last_active)[:10]
+            last_date = datetime.strptime(clean_date, "%Y-%m-%d")
+            # Calculate months between last_date and reference date 2026-06-27
+            ref_date = datetime(2026, 6, 27)
+            months_inactive = (ref_date.year - last_date.year) * 12 + (ref_date.month - last_date.month)
+            if months_inactive > 6:
+                demotion += 2  # Drop 2 tiers
+        except Exception:
+            demotion += 2  # Fail-closed demotion for mangled dates
 
-    # ── TIER 3: Strong fit with minor gaps ──
-    if is_senior_ai and has_real_systems and in_acceptable:
-        return 3
-    if is_senior_ai and in_sweet_spot:
-        return 3  # Right title and experience, may lack specific systems proof
-    if is_senior_ai and has_real_systems:
-        return 3  # Has systems but YOE outside sweet spot
+    # B. Poor Recruiter Response Rate (< 10%)
+    response_rate = signals.get("recruiter_response_rate")
+    if response_rate is not None and response_rate < 0.10:
+        demotion += 1
 
-    # ── TIER 2: Adjacent / "plain-language gem" ──
-    if is_adjacent and has_real_systems:
-        return 2  # This is THE gem the JD talks about
-    if is_senior_ai and in_acceptable:
-        return 2  # AI title + ok experience
-    if is_senior_ai:
-        return 2  # AI title but weaker signals
-    if has_real_systems and in_acceptable:
-        return 2  # Systems evidence with off-title
+    # C. Not Open To Work + Low Engagement
+    if not signals.get("open_to_work_flag", True) and response_rate is not None and response_rate < 0.50:
+        demotion += 1
 
-    # ── TIER 1: Weakly relevant ──
-    if is_adjacent and in_acceptable:
-        return 1
-    if is_adjacent:
-        return 1
-    if is_wrong and has_real_systems:
-        return 1  # Wrong title but somehow built relevant systems
-
-    # ── TIER 0: Everything else ──
-    return 0
+    return max(0, base_tier - demotion)
 
 
 def main():

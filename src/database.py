@@ -134,6 +134,9 @@ def save_pipeline_run(
     conn = get_db_connection(db_path)
     cursor = conn.cursor()
 
+    # Clear scores table to prevent cross-run caching pollution
+    cursor.execute("DELETE FROM scores;")
+
     run_id = str(uuid.uuid4())
     timestamp = datetime.now().isoformat()
     

@@ -58,7 +58,8 @@ def load_scores_from_db(db_path) -> list[dict]:
         SELECT s.candidate_id, s.skill_relevance, s.career_trajectory, s.behavioral_availability, s.trust_score, s.semantic_fit
         FROM scores s
         JOIN candidates c ON s.candidate_id = c.candidate_id
-        WHERE c.disqualified = 0;
+        WHERE c.disqualified = 0
+          AND c.last_updated = (SELECT MAX(timestamp) FROM audit_log);
         """
     )
     rows = [dict(r) for r in cursor.fetchall()]
@@ -163,8 +164,19 @@ def run_optimizer():
     best_runs = []
     checked = 0
     
-    # Pre-allocate iteration variables
+    # Pre-render flat candidate data for maximum iteration speed
     cids = list(candidate_ranks.keys())
+    candidate_data = []
+    for cid in cids:
+        ranks = candidate_ranks[cid]
+        candidate_data.append((
+            cid,
+            ranks["skill"],
+            ranks["career"],
+            ranks["behavioral"],
+            ranks["trust"],
+            ranks["semantic"]
+        ))
     
     for w_skill in w_skill_vals:
         for w_career in w_career_vals:
@@ -180,14 +192,13 @@ def run_optimizer():
                             
                             # Perform RRF calculations inline for maximum performance
                             rrf_scores = []
-                            for cid in cids:
-                                ranks = candidate_ranks[cid]
+                            for cid, r_skill, r_career, r_behavioral, r_trust, r_semantic in candidate_data:
                                 score = (
-                                    w_skill * (1.0 / (k + ranks["skill"])) +
-                                    w_career * (1.0 / (k + ranks["career"])) +
-                                    w_behavioral * (1.0 / (k + ranks["behavioral"])) +
-                                    w_trust * (1.0 / (k + ranks["trust"])) +
-                                    w_semantic * (1.0 / (k + ranks["semantic"]))
+                                    w_skill * (1.0 / (k + r_skill)) +
+                                    w_career * (1.0 / (k + r_career)) +
+                                    w_behavioral * (1.0 / (k + r_behavioral)) +
+                                    w_trust * (1.0 / (k + r_trust)) +
+                                    w_semantic * (1.0 / (k + r_semantic))
                                 )
                                 rrf_scores.append((score, cid))
                             

@@ -438,10 +438,59 @@ def run_guard_gate(candidate: dict) -> dict:
         if yoe >= 8 and (2026 - min_edu_start + 2) <= 4:
             has_edu_fraud = True
             
+    # ── Time-Travel/Tech Release Year Fraud Check ──
+    has_time_travel_fraud = False
+    TECH_RELEASE_YEARS = {
+        "qlora": 2023, "llama-2": 2023, "llama 2": 2023, "bge embeddings": 2023, 
+        "langchain": 2022, "qdrant": 2021, "peft": 2023, "llama-3": 2024,
+        "llama 3": 2024, "mistral": 2023, "gpt-4": 2023, "chatgpt": 2022
+    }
+    for job in candidate.get("career_history", []):
+        end = _parse_date(job.get("end_date"))
+        is_current = job.get("is_current", False)
+        if not end and is_current:
+            end_year = 2026
+        elif end:
+            end_year = end.year
+        else:
+            continue
+            
+        desc = (job.get("description") or "").lower()
+        title_job = (job.get("title") or "").lower()
+        full_job_text = desc + " " + title_job
+        
+        for tech, release_year in TECH_RELEASE_YEARS.items():
+            if tech in full_job_text and end_year < release_year:
+                has_time_travel_fraud = True
+                break
+        if has_time_travel_fraud:
+            break
+            
+    # Check for impossible skill durations in skills list
+    if not has_time_travel_fraud:
+        ref_year = 2026
+        for skill in candidate.get("skills", []):
+            skill_name = skill.get("name", "").lower()
+            claimed_months = skill.get("duration_months", 0)
+            
+            for tech, release_year in TECH_RELEASE_YEARS.items():
+                if tech in skill_name:
+                    max_possible_months = (ref_year - release_year + 1) * 12
+                    if claimed_months > max_possible_months:
+                        has_time_travel_fraud = True
+                        break
+            if has_time_travel_fraud:
+                break
+            
+    if has_time_travel_fraud:
+        all_violations.append("Honeypot: Candidate claims experience with a technology before its public release date.")
+            
     is_hard_honeypot = (
-        is_expert_fraud 
-        or has_tenure_fraud 
-        or has_edu_fraud
+        len(chrono_violations) >= 2
+        or (expertise_info["expert_zero_count"] >= 8)
+        or (len(chrono_violations) >= 1 and expertise_info["is_suspicious"])
+        or (len(chrono_violations) >= 1 and fictional_company_count >= 2)
+        or has_time_travel_fraud
     )
     is_synthetic_noise = fictional_company_count >= 1 and not is_hard_honeypot
     

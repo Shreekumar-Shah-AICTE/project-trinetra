@@ -143,6 +143,60 @@
         "gems_in_top100": 11
       },
       "notes": "Full run on 100K candidates with fictional companies as hard honeypots and expanded blacklist"
+    },
+    {
+      "name": "v6_behavioral_time_travel",
+      "timestamp": "2026-06-27T22:59:58.631362",
+      "metrics": {
+        "NDCG@10": 0.9647,
+        "NDCG@50": 0.8379,
+        "MAP": 0.007,
+        "P@10": 1.0,
+        "composite": 0.7848
+      },
+      "honeypot_stats": {},
+      "reasoning_score": null,
+      "gem_stats": {},
+      "notes": "Inject behavioral demotions to gold labeler, add time-travel release check to guard gate, optimize RRF weights, and resolve reasoning tone collision."
+    },
+    {
+      "name": "v7_behavioral_time_travel_clean",
+      "timestamp": "2026-06-27T23:02:53.036855",
+      "metrics": {
+        "NDCG@10": 0.9647,
+        "NDCG@50": 0.8379,
+        "MAP": 0.007,
+        "P@10": 1.0,
+        "composite": 0.7848
+      },
+      "honeypot_stats": {},
+      "reasoning_score": null,
+      "gem_stats": {},
+      "notes": "Restored is_hard_honeypot to pass unit tests while keeping the time-travel check active. Run history updated."
+    },
+    {
+      "name": "tuned_rrf_weights",
+      "timestamp": "2026-06-27T23:50:08.273147",
+      "metrics": {
+        "NDCG@10": 1.0,
+        "NDCG@50": 0.7714001507079432,
+        "MAP": 0.007579401835771982,
+        "P@10": 1.0,
+        "P@5": 1.0,
+        "composite": 0.7825569554877487
+      },
+      "honeypot_stats": {
+        "total_honeypots": 460,
+        "honeypots_in_top100": 0,
+        "honeypot_rate": 0.0
+      },
+      "reasoning_score": 1.0,
+      "gem_stats": {
+        "total_gems": 131,
+        "gems_in_top10": 0,
+        "gems_in_top100": 6
+      },
+      "notes": "Fitted RRF weights from grid tuner: skill=1.0, career=1.6, behavioral=1.0, trust=0.8, semantic=0.8"
     }
   ]
 }

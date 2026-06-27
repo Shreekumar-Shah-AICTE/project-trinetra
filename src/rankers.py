@@ -85,16 +85,28 @@ def _score_concept_tier(text_fields: dict, source_weights: dict,
     if not concepts:
         return 0.0
     
+    import re
     total_weighted_matches = 0.0
     
     for concept in concepts:
         concept_lower = concept.lower()
+        
+        # Fast path vs word-boundary safety compilation
+        if len(concept_lower) <= 4 or concept_lower in ["bert", "faiss", "bm25", "qlora", "peft", "lora"]:
+            pattern = re.compile(r'\b' + re.escape(concept_lower) + r'\b')
+        else:
+            pattern = None
+            
         best_source_weight = 0.0
         
         for source_name, weight in source_weights.items():
             text = text_fields.get(source_name, "").lower()
-            if concept_lower in text:
-                best_source_weight = max(best_source_weight, weight)
+            if pattern:
+                if pattern.search(text):
+                    best_source_weight = max(best_source_weight, weight)
+            else:
+                if concept_lower in text:
+                    best_source_weight = max(best_source_weight, weight)
         
         total_weighted_matches += best_source_weight * tier_weight
     

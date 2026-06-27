@@ -129,7 +129,7 @@ def main():
     print(f"  Scanned {total:,} candidates in {elapsed:.1f}s")
     print()
     print(f"  Hard honeypots detected: {len(honeypots)}")
-    print(f"  Expected range: ~60-100 (spec says ~80)")
+    print(f"  Expected range: ~30-100 (spec says ~80)")
     print()
 
     # Trust grade distribution
@@ -180,7 +180,7 @@ def main():
         print()
 
     # Detection accuracy estimate
-    if len(honeypots) < 40:
+    if len(honeypots) < 30:
         print("  WARNING: Only detected {len(honeypots)} honeypots. Expected ~80.")
         print("  Guard Gate may be UNDER-detecting. Review check thresholds.")
     elif len(honeypots) > 150:

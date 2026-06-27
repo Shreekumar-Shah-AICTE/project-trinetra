@@ -61,14 +61,14 @@ JD_CONNECTION_TERMS = [
 
 # Specific fact indicators — reasoning should reference concrete profile data
 FACT_INDICATORS = [
-    r"\d+\.?\d*\s*yr",  # "6.1 yrs"
-    r"\d+d\s*notice",   # "30d notice"
-    r"at\s+\w+",        # "at Google"
-    r"lineage:",        # "product lineage: X, Y"
-    r"career evidence:", # specific career evidence
-    r"Trust:\s*[A-F]",  # trust grade
-    r"Dim ranks:",      # dimension breakdown
-    r"S#\d+",           # specific rank numbers
+    r"\d+\.?\d*\s*y(?:ea)?rs?",          # Matches "5 yr", "5 yrs", "5 years", "6.1 yrs"
+    r"\d+(?:d|\s*days?)\s*notice",       # Matches "30d notice", "30 days notice"
+    r"at\s+[A-Z]\w+",                    # Matches "at Google", "at Zomato"
+    r"lineage:", 
+    r"career evidence:", 
+    r"Trust:\s*[A-F]", 
+    r"Dim ranks:", 
+    r"S#\d+",
 ]
 
 
@@ -157,10 +157,14 @@ def audit_reasoning(submission_path: str) -> dict:
 
     # ── CHECK 5: Honest Concerns ──
     concern_indicators = ["concern", "gap", "limited", "weak", "risk", "outside", "long notice", "inactive"]
+    negations = ["no concern", "no gap", "zero concern", "zero gap", "without gap", "no obvious gap"]
     concern_count = 0
     for r in reasonings:
         low = r.lower()
-        if any(c in low for c in concern_indicators):
+        has_concern_word = any(c in low for c in concern_indicators)
+        has_negation = any(n in low for n in negations)
+        # Only count if it mentions a concern AND isn't just saying "no concerns"
+        if has_concern_word and not has_negation:
             concern_count += 1
     concern_ratio = concern_count / len(reasonings) if reasonings else 0
     results["checks"]["honest_concerns"] = {
@@ -208,7 +212,7 @@ def audit_reasoning(submission_path: str) -> dict:
     for i, r in enumerate(reasonings):
         rank = ranks[i]
         low = r.lower()
-        has_strong_concern = any(w in low for w in ["flagged", "critical", "weak", "irrelevant", "major concern"])
+        has_strong_concern = any(w in low for w in ["unqualified", "disqualified", "irrelevant", "do not hire", "fraud", "honeypot"])
         has_high_praise = "textbook" in low or "ideal" in low or "perfect" in low
 
         # High-ranked candidate with heavy concerns

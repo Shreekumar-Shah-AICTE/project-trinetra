@@ -96,8 +96,9 @@ def is_gem(candidate: dict) -> bool:
 
     # Career text must show building relevant systems
     career_text = _get_career_text(candidate)
-    has_build = any(v in career_text for v in BUILD_VERBS)
-    has_system = any(s in career_text for s in RELEVANT_SYSTEMS)
+    import re
+    has_build = any(re.search(r'\b' + re.escape(v) + r'\b', career_text) for v in BUILD_VERBS)
+    has_system = any(re.search(r'\b' + re.escape(s) + r'\b', career_text) for s in RELEVANT_SYSTEMS)
 
     return has_build and has_system
 

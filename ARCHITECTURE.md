@@ -50,7 +50,7 @@ The Guard Gate filters out invalid profiles and assigns a **Trust Grade (A, B, C
 *   **Keyword Stuffer Detector**: Flags non-engineering/non-AI profiles (e.g., "Marketing Manager", "Accountant") that claim 5+ expert AI skills but have no career history mentioning AI.
 *   **Empty Expertise Filter**: Identifies profiles claiming "expert" status across multiple skills with exactly `duration_months: 0` and $\le$ 1 endorsement (classic synthetic honeypots).
 *   **Headline Blacklist Filter**: Immediately drops candidates in non-AI domains (e.g., Customer Support, Operations Manager, QA/Test Engineers, .NET developers) who lack actual ML career descriptions.
-*   **Honeypot Detector**: Triggers hard-honeypot status (Grade F) for the extreme date/skill cheats, aligning with the expected ~80 honeypots count. Both behavioral honeypots and synthetic noise are completely pruned from the scoring pool.
+*   **Honeypot Detector**: Triggers hard-honeypot status (Grade F) for extreme date/skill cheats and GenAI time-travel anomalies (e.g. claiming experience with technologies like Llama-2 or QLoRA before their release dates). Both behavioral honeypots and synthetic noise are completely pruned from the scoring pool.
 
 ### 👁️ Stage 2: Multi-Dimensional Scoring (Eye 2 — Independence)
 Instead of collapsing all features into a single weighted score, Trinetra ranks candidates across **5 orthogonal dimensions**:
@@ -67,7 +67,7 @@ Fuses the 5 independent dimension rank lists into a single consolidated ranking.
 *   **Where**:
     *   $M$ represents the 5 dimensions.
     *   $k = 60$ (standard smoothing constant to prevent top-rank bias).
-    *   $w_m$ represents tuned dimension weights: `skill = 1.6`, `semantic = 1.0`, `trust = 0.8`, `career = 0.4`, `behavioral = 0.2`.
+    *   $w_m$ represents tuned dimension weights: `skill = 1.0`, `career = 1.0`, `behavioral = 0.5`, `trust = 0.8`, `semantic = 1.0`.
 *   RRF eliminates the fragility of hand-tuned weight combinations, offering robust mathematical generalization.
 *   **Tie-Breaking**: Ties in RRF scores are resolved deterministically by `candidate_id` ascending (lexicographical order), ensuring valid formatting.
 
