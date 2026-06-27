@@ -1,0 +1,28 @@
+{
+  "runs": [
+    {
+      "name": "v1_baseline",
+      "timestamp": "2026-06-27T14:00:51.085634",
+      "metrics": {
+        "NDCG@10": 0.26386772277687637,
+        "NDCG@50": 0.25576544310682725,
+        "MAP": 0.09090909090909091,
+        "P@10": 0.0,
+        "P@5": 0.0,
+        "composite": 0.22229985795685
+      },
+      "honeypot_stats": {
+        "total_honeypots": 0,
+        "honeypots_in_top100": 0,
+        "honeypot_rate": 0.0
+      },
+      "reasoning_score": 1.0,
+      "gem_stats": {
+        "total_gems": 1,
+        "gems_in_top10": 1,
+        "gems_in_top100": 1
+      },
+      "notes": "Initial baseline before any tuning"
+    }
+  ]
+}

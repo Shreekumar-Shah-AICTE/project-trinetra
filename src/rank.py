@@ -24,6 +24,14 @@ import sys
 import time
 from typing import Optional
 
+# Force UTF-8 stdout/stderr encoding on Windows to support visual symbols (🔱, ▸, etc.)
+if sys.platform.startswith("win"):
+    try:
+        sys.stdout.reconfigure(encoding="utf-8")
+        sys.stderr.reconfigure(encoding="utf-8")
+    except AttributeError:
+        pass
+
 # Add parent directory to path for imports
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
