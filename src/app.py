@@ -7,6 +7,7 @@ import sys
 import os
 import json
 import time
+import textwrap
 from datetime import datetime
 
 # Add root folder to python path
@@ -63,233 +64,235 @@ st.set_page_config(
 #  CUSTOM CSS STYLE INJECTIONS (VSF Compliance)
 # ──────────────────────────────────────────────────────────────────────
 st.markdown(
-    """
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <style>
-    /* Main Layout Styling */
-    .stApp {
-        background-color: #08090E;
-        color: #C5C6C7;
-        font-family: 'Plus Jakarta Sans', sans-serif;
-    }
-    
-    /* Header & Branding */
-    .banner-container {
-        padding: 30px;
-        background: linear-gradient(135deg, rgba(8, 9, 14, 0.9) 0%, rgba(20, 22, 34, 0.8) 100%);
-        border: 1px solid rgba(0, 229, 204, 0.15);
-        border-radius: 16px;
-        margin-bottom: 25px;
-        text-align: center;
-        box-shadow: 0 4px 30px rgba(0, 229, 204, 0.03);
-    }
-    
-    .gradient-title {
-        font-family: 'Space Grotesk', sans-serif;
-        font-size: 3.2rem;
-        font-weight: 700;
-        background: linear-gradient(90deg, #00E5CC 0%, #D4AF37 50%, #00E5CC 100%);
-        background-size: 200% auto;
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        margin-bottom: 8px;
-        letter-spacing: -0.02em;
-    }
-    
-    .tagline {
-        font-size: 1.1rem;
-        color: #8F9CAE;
-        margin-bottom: 0px;
-        letter-spacing: 0.05em;
-        text-transform: uppercase;
-        font-weight: 500;
-    }
-    
-    /* Cards and Glassmorphism */
-    .forensic-card {
-        background-color: rgba(255, 255, 255, 0.02);
-        border: 1px solid rgba(255, 255, 255, 0.06);
-        border-radius: 12px;
-        padding: 20px;
-        margin-bottom: 15px;
-        backdrop-filter: blur(12px);
-        transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-    }
-    .forensic-card:hover {
-        border-color: rgba(0, 229, 204, 0.3);
-        box-shadow: 0 4px 20px rgba(0, 229, 204, 0.05);
-        background-color: rgba(255, 255, 255, 0.03);
-    }
-    
-    /* Trust Grade Badges */
-    .badge-A {
-        background: rgba(16, 185, 129, 0.15);
-        color: #10B981;
-        border: 1px solid rgba(16, 185, 129, 0.3);
-        box-shadow: 0 0 10px rgba(16, 185, 129, 0.1);
-        border-radius: 4px;
-        padding: 3px 10px;
-        font-weight: bold;
-        font-size: 0.9em;
-    }
-    .badge-B {
-        background: rgba(52, 211, 153, 0.15);
-        color: #34D399;
-        border: 1px solid rgba(52, 211, 153, 0.3);
-        border-radius: 4px;
-        padding: 3px 10px;
-        font-weight: bold;
-        font-size: 0.9em;
-    }
-    .badge-C {
-        background: rgba(245, 158, 11, 0.15);
-        color: #F59E0B;
-        border: 1px solid rgba(245, 158, 11, 0.3);
-        border-radius: 4px;
-        padding: 3px 10px;
-        font-weight: bold;
-        font-size: 0.9em;
-    }
-    .badge-D {
-        background: rgba(249, 115, 22, 0.15);
-        color: #F97316;
-        border: 1px solid rgba(249, 115, 22, 0.3);
-        border-radius: 4px;
-        padding: 3px 10px;
-        font-weight: bold;
-        font-size: 0.9em;
-    }
-    .badge-F {
-        background: rgba(239, 68, 68, 0.15);
-        color: #EF4444;
-        border: 1px solid rgba(239, 68, 68, 0.4);
-        box-shadow: 0 0 12px rgba(239, 68, 68, 0.2);
-        border-radius: 4px;
-        padding: 3px 10px;
-        font-weight: bold;
-        font-size: 0.9em;
-        animation: pulse-shadow 2.5s infinite;
-    }
-    @keyframes pulse-shadow {
-        0% { box-shadow: 0 0 4px rgba(239, 68, 68, 0.1); }
-        50% { box-shadow: 0 0 12px rgba(239, 68, 68, 0.4); }
-        100% { box-shadow: 0 0 4px rgba(239, 68, 68, 0.1); }
-    }
-    
-    /* Metric styling */
-    .kpi-container {
-        display: flex;
-        justify-content: space-between;
-        gap: 15px;
-        margin-bottom: 25px;
-    }
-    .kpi-box {
-        flex: 1;
-        background: rgba(255, 255, 255, 0.02);
-        border: 1px solid rgba(255, 255, 255, 0.06);
-        border-radius: 10px;
-        padding: 15px;
-        text-align: center;
-    }
-    .kpi-value {
-        font-family: 'Space Grotesk', sans-serif;
-        font-size: 1.8rem;
-        font-weight: 600;
-        color: #00E5CC;
-    }
-    .kpi-label {
-        font-size: 0.85rem;
-        color: #8F9CAE;
-        text-transform: uppercase;
-        margin-top: 5px;
-    }
-    
-    /* Timeline styles */
-    .timeline-container {
-        border-left: 2px solid rgba(255,255,255,0.08);
-        margin-left: 15px;
-        padding-left: 20px;
-        position: relative;
-    }
-    .timeline-node {
-        position: absolute;
-        left: -6px;
-        width: 10px;
-        height: 10px;
-        border-radius: 50%;
-        background-color: #00e5cc;
-        border: 2px solid #08090E;
-        top: 6px;
-    }
-    .timeline-node-fictional {
-        background-color: #EF4444;
-    }
-    .timeline-node-services {
-        background-color: #F59E0B;
-    }
-    .timeline-item {
-        margin-bottom: 20px;
-        position: relative;
-    }
-    
-    /* Custom tag styles */
-    .tag-product {
-        background-color: rgba(16, 185, 129, 0.12);
-        color: #10B981;
-        padding: 2px 6px;
-        border-radius: 4px;
-        font-size: 0.8em;
-        font-weight: 500;
-        border: 1px solid rgba(16, 185, 129, 0.2);
-    }
-    .tag-services {
-        background-color: rgba(245, 158, 11, 0.12);
-        color: #F59E0B;
-        padding: 2px 6px;
-        border-radius: 4px;
-        font-size: 0.8em;
-        font-weight: 500;
-        border: 1px solid rgba(245, 158, 11, 0.2);
-    }
-    .tag-fictional {
-        background-color: rgba(239, 68, 68, 0.12);
-        color: #EF4444;
-        padding: 2px 6px;
-        border-radius: 4px;
-        font-size: 0.8em;
-        font-weight: 500;
-        border: 1px solid rgba(239, 68, 68, 0.25);
-    }
-    
-    /* Progress Bars for Dimension Scores */
-    .dim-label {
-        font-size: 0.85em;
-        color: #8F9CAE;
-        margin-bottom: 4px;
-        display: flex;
-        justify-content: space-between;
-    }
-    .progress-bg {
-        background-color: rgba(255,255,255,0.05);
-        border-radius: 6px;
-        height: 8px;
-        width: 100%;
-        margin-bottom: 12px;
-        overflow: hidden;
-    }
-    .progress-bar-fill {
-        background: linear-gradient(90deg, #00E5CC 0%, #D4AF37 100%);
-        height: 8px;
-        border-radius: 6px;
-    }
-    
-    /* Sidebar elements overrides */
-    section[data-testid="stSidebar"] {
-        background-color: #0A0B11 !important;
-        border-right: 1px solid rgba(255,255,255,0.05);
-    }
-    </style>
-    """,
+    textwrap.dedent(
+        """
+        <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+        <style>
+        /* Main Layout Styling */
+        .stApp {
+            background-color: #08090E;
+            color: #C5C6C7;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+        }
+        
+        /* Header & Branding */
+        .banner-container {
+            padding: 30px;
+            background: linear-gradient(135deg, rgba(8, 9, 14, 0.9) 0%, rgba(20, 22, 34, 0.8) 100%);
+            border: 1px solid rgba(0, 229, 204, 0.15);
+            border-radius: 16px;
+            margin-bottom: 25px;
+            text-align: center;
+            box-shadow: 0 4px 30px rgba(0, 229, 204, 0.03);
+        }
+        
+        .gradient-title {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 3.2rem;
+            font-weight: 700;
+            background: linear-gradient(90deg, #00E5CC 0%, #D4AF37 50%, #00E5CC 100%);
+            background-size: 200% auto;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 8px;
+            letter-spacing: -0.02em;
+        }
+        
+        .tagline {
+            font-size: 1.1rem;
+            color: #8F9CAE;
+            margin-bottom: 0px;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+            font-weight: 500;
+        }
+        
+        /* Cards and Glassmorphism */
+        .forensic-card {
+            background-color: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 15px;
+            backdrop-filter: blur(12px);
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .forensic-card:hover {
+            border-color: rgba(0, 229, 204, 0.3);
+            box-shadow: 0 4px 20px rgba(0, 229, 204, 0.05);
+            background-color: rgba(255, 255, 255, 0.03);
+        }
+        
+        /* Trust Grade Badges */
+        .badge-A {
+            background: rgba(16, 185, 129, 0.15);
+            color: #10B981;
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            box-shadow: 0 0 10px rgba(16, 185, 129, 0.1);
+            border-radius: 4px;
+            padding: 3px 10px;
+            font-weight: bold;
+            font-size: 0.9em;
+        }
+        .badge-B {
+            background: rgba(52, 211, 153, 0.15);
+            color: #34D399;
+            border: 1px solid rgba(52, 211, 153, 0.3);
+            border-radius: 4px;
+            padding: 3px 10px;
+            font-weight: bold;
+            font-size: 0.9em;
+        }
+        .badge-C {
+            background: rgba(245, 158, 11, 0.15);
+            color: #F59E0B;
+            border: 1px solid rgba(245, 158, 11, 0.3);
+            border-radius: 4px;
+            padding: 3px 10px;
+            font-weight: bold;
+            font-size: 0.9em;
+        }
+        .badge-D {
+            background: rgba(249, 115, 22, 0.15);
+            color: #F97316;
+            border: 1px solid rgba(249, 115, 22, 0.3);
+            border-radius: 4px;
+            padding: 3px 10px;
+            font-weight: bold;
+            font-size: 0.9em;
+        }
+        .badge-F {
+            background: rgba(239, 68, 68, 0.15);
+            color: #EF4444;
+            border: 1px solid rgba(239, 68, 68, 0.4);
+            box-shadow: 0 0 12px rgba(239, 68, 68, 0.2);
+            border-radius: 4px;
+            padding: 3px 10px;
+            font-weight: bold;
+            font-size: 0.9em;
+            animation: pulse-shadow 2.5s infinite;
+        }
+        @keyframes pulse-shadow {
+            0% { box-shadow: 0 0 4px rgba(239, 68, 68, 0.1); }
+            50% { box-shadow: 0 0 12px rgba(239, 68, 68, 0.4); }
+            100% { box-shadow: 0 0 4px rgba(239, 68, 68, 0.1); }
+        }
+        
+        /* Metric styling */
+        .kpi-container {
+            display: flex;
+            justify-content: space-between;
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+        .kpi-box {
+            flex: 1;
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            border-radius: 10px;
+            padding: 15px;
+            text-align: center;
+        }
+        .kpi-value {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 1.8rem;
+            font-weight: 600;
+            color: #00E5CC;
+        }
+        .kpi-label {
+            font-size: 0.85rem;
+            color: #8F9CAE;
+            text-transform: uppercase;
+            margin-top: 5px;
+        }
+        
+        /* Timeline styles */
+        .timeline-container {
+            border-left: 2px solid rgba(255,255,255,0.08);
+            margin-left: 15px;
+            padding-left: 20px;
+            position: relative;
+        }
+        .timeline-node {
+            position: absolute;
+            left: -6px;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background-color: #00e5cc;
+            border: 2px solid #08090E;
+            top: 6px;
+        }
+        .timeline-node-fictional {
+            background-color: #EF4444;
+        }
+        .timeline-node-services {
+            background-color: #F59E0B;
+        }
+        .timeline-item {
+            margin-bottom: 20px;
+            position: relative;
+        }
+        
+        /* Custom tag styles */
+        .tag-product {
+            background-color: rgba(16, 185, 129, 0.12);
+            color: #10B981;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.8em;
+            font-weight: 500;
+            border: 1px solid rgba(16, 185, 129, 0.2);
+        }
+        .tag-services {
+            background-color: rgba(245, 158, 11, 0.12);
+            color: #F59E0B;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.8em;
+            font-weight: 500;
+            border: 1px solid rgba(245, 158, 11, 0.2);
+        }
+        .tag-fictional {
+            background-color: rgba(239, 68, 68, 0.12);
+            color: #EF4444;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.8em;
+            font-weight: 500;
+            border: 1px solid rgba(239, 68, 68, 0.25);
+        }
+        
+        /* Progress Bars for Dimension Scores */
+        .dim-label {
+            font-size: 0.85em;
+            color: #8F9CAE;
+            margin-bottom: 4px;
+            display: flex;
+            justify-content: space-between;
+        }
+        .progress-bg {
+            background-color: rgba(255,255,255,0.05);
+            border-radius: 6px;
+            height: 8px;
+            width: 100%;
+            margin-bottom: 12px;
+            overflow: hidden;
+        }
+        .progress-bar-fill {
+            background: linear-gradient(90deg, #00E5CC 0%, #D4AF37 100%);
+            height: 8px;
+            border-radius: 6px;
+        }
+        
+        /* Sidebar elements overrides */
+        section[data-testid="stSidebar"] {
+            background-color: #0A0B11 !important;
+            border-right: 1px solid rgba(255,255,255,0.05);
+        }
+        </style>
+        """
+    ),
     unsafe_allow_html=True,
 )
 
@@ -451,12 +454,14 @@ except Exception as e:
 #  MAIN PAGE HEADER
 # ──────────────────────────────────────────────────────────────────────
 st.markdown(
-    """
-    <div class="banner-container">
-        <div class="gradient-title">PROJECT TRINETRA (त्रिनेत्र)</div>
-        <div class="tagline">Three Eyes. Zero Fakes. Trust-First Talent Forensics Engine</div>
-    </div>
-    """,
+    textwrap.dedent(
+        """
+        <div class="banner-container">
+            <div class="gradient-title">PROJECT TRINETRA (त्रिनेत्र)</div>
+            <div class="tagline">Three Eyes. Zero Fakes. Trust-First Talent Forensics Engine</div>
+        </div>
+        """
+    ),
     unsafe_allow_html=True,
 )
 
@@ -699,30 +704,32 @@ if data_loaded:
         
         # Dashboard KPIs
         st.markdown(
-            f"""
-            <div class="kpi-container">
-                <div class="kpi-box">
-                    <div class="kpi-value">{stats['total_scanned']:,}</div>
-                    <div class="kpi-label">Profiles Scanned</div>
+            textwrap.dedent(
+                f"""
+                <div class="kpi-container">
+                    <div class="kpi-box">
+                        <div class="kpi-value">{stats['total_scanned']:,}</div>
+                        <div class="kpi-label">Profiles Scanned</div>
+                    </div>
+                    <div class="kpi-box" style="border-color: rgba(239, 68, 68, 0.25);">
+                        <div class="kpi-value" style="color: #EF4444;">{stats['hard_honeypots']}</div>
+                        <div class="kpi-label">Honeypots Caught</div>
+                    </div>
+                    <div class="kpi-box" style="border-color: rgba(245, 158, 11, 0.25);">
+                        <div class="kpi-value" style="color: #F59E0B;">{stats['disqualified']}</div>
+                        <div class="kpi-label">Domain Disqualified</div>
+                    </div>
+                    <div class="kpi-box">
+                        <div class="kpi-value">{stats['surviving']:,}</div>
+                        <div class="kpi-label">Passing Candidates</div>
+                    </div>
+                    <div class="kpi-box">
+                        <div class="kpi-value" style="color: #D4AF37;">{stats['time_taken']:.2f}s</div>
+                        <div class="kpi-label">Execution Time</div>
+                    </div>
                 </div>
-                <div class="kpi-box" style="border-color: rgba(239, 68, 68, 0.25);">
-                    <div class="kpi-value" style="color: #EF4444;">{stats['hard_honeypots']}</div>
-                    <div class="kpi-label">Honeypots Caught</div>
-                </div>
-                <div class="kpi-box" style="border-color: rgba(245, 158, 11, 0.25);">
-                    <div class="kpi-value" style="color: #F59E0B;">{stats['disqualified']}</div>
-                    <div class="kpi-label">Domain Disqualified</div>
-                </div>
-                <div class="kpi-box">
-                    <div class="kpi-value">{stats['surviving']:,}</div>
-                    <div class="kpi-label">Passing Candidates</div>
-                </div>
-                <div class="kpi-box">
-                    <div class="kpi-value" style="color: #D4AF37;">{stats['time_taken']:.2f}s</div>
-                    <div class="kpi-label">Execution Time</div>
-                </div>
-            </div>
-            """,
+                """
+            ),
             unsafe_allow_html=True,
         )
         
@@ -783,23 +790,25 @@ if data_loaded:
                     if st.session_state.selected_candidate_id == cid:
                         selected_style = "border: 1px solid #00E5CC; box-shadow: 0 0 15px rgba(0, 229, 204, 0.15);"
                         
-                    card_html = f"""
-                    <div class="forensic-card" style="{selected_style}">
-                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-                            <span style="font-family: Space Grotesk; font-size:1.15em; font-weight:600; color: #FFFFFF;">
-                                #{rank} &nbsp;&bull;&nbsp; {name} <span style="font-size:0.75em; color:#8F9CAE;">({cid})</span>
-                            </span>
-                            <span class="badge-{grade}">{grade}</span>
+                    card_html = textwrap.dedent(
+                        f"""
+                        <div class="forensic-card" style="{selected_style}">
+                            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                                <span style="font-family: Space Grotesk; font-size:1.15em; font-weight:600; color: #FFFFFF;">
+                                    #{rank} &nbsp;&bull;&nbsp; {name} <span style="font-size:0.75em; color:#8F9CAE;">({cid})</span>
+                                </span>
+                                <span class="badge-{grade}">{grade}</span>
+                            </div>
+                            <div style="font-size:0.9em; margin-bottom:10px; color:#A8B2C1;">
+                                {headline}
+                            </div>
+                            <div style="display:flex; justify-content:space-between; align-items:center; font-size:0.8em;">
+                                <span style="color: #D4AF37; font-weight:600; font-family: Space Grotesk;">RRF Score: {score:.5f}</span>
+                                <span style="color: #8F9CAE;">YOE: {row['yoe']:.1f} yrs</span>
+                            </div>
                         </div>
-                        <div style="font-size:0.9em; margin-bottom:10px; color:#A8B2C1;">
-                            {headline}
-                        </div>
-                        <div style="display:flex; justify-content:space-between; align-items:center; font-size:0.8em;">
-                            <span style="color: #D4AF37; font-weight:600; font-family: Space Grotesk;">RRF Score: {score:.5f}</span>
-                            <span style="color: #8F9CAE;">YOE: {row['yoe']:.1f} yrs</span>
-                        </div>
-                    </div>
-                    """
+                        """
+                    )
                     st.markdown(card_html, unsafe_allow_html=True)
                     if st.button(f"Analyze Case File — {cid}", key=f"btn_{cid}", use_container_width=True):
                         st.session_state.selected_candidate_id = cid
@@ -823,26 +832,30 @@ if data_loaded:
                 
                 # Render Detailed Forensic Panel
                 st.markdown(
-                    f"""
-                    <div style="background-color: rgba(255, 255, 255, 0.015); border: 1px solid rgba(255,255,255,0.06); border-radius:12px; padding:25px; min-height: 500px;">
-                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom:12px;">
-                            <div>
-                                <h3 style="margin:0; font-family:Space Grotesk; color:#FFFFFF; font-size:1.5em;">{cand_row['name']}</h3>
-                                <span style="font-size:0.85em; color:#8F9CAE;">ID: {selected_id} &nbsp;|&nbsp; {cand_row['headline']}</span>
+                    textwrap.dedent(
+                        f"""
+                        <div style="background-color: rgba(255, 255, 255, 0.015); border: 1px solid rgba(255,255,255,0.06); border-radius:12px; padding:25px; min-height: 500px;">
+                            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom:12px;">
+                                <div>
+                                    <h3 style="margin:0; font-family:Space Grotesk; color:#FFFFFF; font-size:1.5em;">{cand_row['name']}</h3>
+                                    <span style="font-size:0.85em; color:#8F9CAE;">ID: {selected_id} &nbsp;|&nbsp; {cand_row['headline']}</span>
+                                </div>
+                                <span class="badge-{grade}" style="font-size:1.2em; padding:5px 15px;">Grade {grade}</span>
                             </div>
-                            <span class="badge-{grade}" style="font-size:1.2em; padding:5px 15px;">Grade {grade}</span>
-                        </div>
-                    """,
+                        """
+                    ),
                     unsafe_allow_html=True,
                 )
                 
                 # 1. Forensic Reasoning
                 st.markdown(
-                    f"""
-                    <div style="background: rgba(0, 229, 204, 0.04); border-left: 3px solid #00E5CC; padding: 12px 18px; border-radius: 4px; margin-bottom: 20px; font-style: italic;">
-                        <strong>Detective Notes:</strong> "{cand_row['reasoning']}"
-                    </div>
-                    """,
+                    textwrap.dedent(
+                        f"""
+                        <div style="background: rgba(0, 229, 204, 0.04); border-left: 3px solid #00E5CC; padding: 12px 18px; border-radius: 4px; margin-bottom: 20px; font-style: italic;">
+                            <strong>Detective Notes:</strong> "{cand_row['reasoning']}"
+                        </div>
+                        """
+                    ),
                     unsafe_allow_html=True,
                 )
                 
@@ -863,15 +876,17 @@ if data_loaded:
                         score_val = cand_row.get(f"{dim}_score", 0.0)
                         
                         st.markdown(
-                            f"""
-                            <div class="dim-label">
-                                <span><strong>{dim.capitalize()} Fit</strong> (Rank #{rank_pos} of {total_verified})</span>
-                                <span style="color:#00E5CC;">Score: {score_val:.3f}</span>
-                            </div>
-                            <div class="progress-bg">
-                                <div class="progress-bar-fill" style="width: {pct*100}%;"></div>
-                            </div>
-                            """,
+                            textwrap.dedent(
+                                f"""
+                                <div class="dim-label">
+                                    <span><strong>{dim.capitalize()} Fit</strong> (Rank #{rank_pos} of {total_verified})</span>
+                                    <span style="color:#00E5CC;">Score: {score_val:.3f}</span>
+                                </div>
+                                <div class="progress-bg">
+                                    <div class="progress-bar-fill" style="width: {pct*100}%;"></div>
+                                </div>
+                                """
+                            ),
                             unsafe_allow_html=True,
                         )
                         
@@ -916,14 +931,16 @@ if data_loaded:
                                 tag_html = "<span class='tag-fictional'>Fictional/Fake</span>"
                             
                             st.markdown(
-                                f"""
-                                <div class="timeline-item">
-                                    <div class="timeline-node {node_class}"></div>
-                                    <div style="font-weight:600; font-size:1.05em; color:#FFFFFF;">{title} {tag_html}</div>
-                                    <div style="font-size:0.9em; color:#8F9CAE;">at <strong>{company}</strong> &bull; {duration} months ({start} to {end})</div>
-                                    <p style="font-size:0.88em; margin-top:6px; color:#A8B2C1; line-height:1.4;">{desc}</p>
-                                </div>
-                                """,
+                                textwrap.dedent(
+                                    f"""
+                                    <div class="timeline-item">
+                                        <div class="timeline-node {node_class}"></div>
+                                        <div style="font-weight:600; font-size:1.05em; color:#FFFFFF;">{title} {tag_html}</div>
+                                        <div style="font-size:0.9em; color:#8F9CAE;">at <strong>{company}</strong> &bull; {duration} months ({start} to {end})</div>
+                                        <p style="font-size:0.88em; margin-top:6px; color:#A8B2C1; line-height:1.4;">{desc}</p>
+                                    </div>
+                                    """
+                                ),
                                 unsafe_allow_html=True,
                             )
                         st.markdown("</div>", unsafe_allow_html=True)
@@ -1056,13 +1073,15 @@ if data_loaded:
                     with st.expander("📁 View Recent Repositories"):
                         for repo in p["recent_repos"]:
                             st.markdown(
-                                f"""
-                                <div style="padding: 10px; border-bottom: 1px solid rgba(255,255,255,0.05);">
-                                    <div style="font-weight:600;"><a href="{repo['url']}" target="_blank" style="color:#00E5CC; text-decoration:none;">{repo['name']}</a> ⭐ {repo['stars']}</div>
-                                    <div style="font-size:0.85em; color:#8F9CAE;">Language: {repo['language']}</div>
-                                    <p style="font-size:0.85em; margin: 4px 0 0 0; color:#A8B2C1;">{repo['description']}</p>
-                                </div>
-                                """,
+                                textwrap.dedent(
+                                    f"""
+                                    <div style="padding: 10px; border-bottom: 1px solid rgba(255,255,255,0.05);">
+                                        <div style="font-weight:600;"><a href="{repo['url']}" target="_blank" style="color:#00E5CC; text-decoration:none;">{repo['name']}</a> ⭐ {repo['stars']}</div>
+                                        <div style="font-size:0.85em; color:#8F9CAE;">Language: {repo['language']}</div>
+                                        <p style="font-size:0.85em; margin: 4px 0 0 0; color:#A8B2C1;">{repo['description']}</p>
+                                    </div>
+                                    """
+                                ),
                                 unsafe_allow_html=True
                             )
                             

@@ -487,6 +487,8 @@ def run_guard_gate(candidate: dict) -> dict:
         all_violations.append("Honeypot: Impossible tenure duration claims (e.g. 8 years at a 3-year-old company).")
     if has_edu_fraud:
         all_violations.append("Honeypot: Stated years of experience conflicts with earliest education start year.")
+    if company_info["has_fictional"] and len(chrono_violations) >= 1:
+        all_violations.append("Honeypot: Profile contains a fictional company combined with chronological timeline inconsistencies.")
             
     is_hard_honeypot = (
         has_time_travel_fraud
@@ -494,6 +496,7 @@ def run_guard_gate(candidate: dict) -> dict:
         or has_tenure_fraud
         or has_edu_fraud
         or len(chrono_violations) >= 3
+        or (company_info["has_fictional"] and len(chrono_violations) >= 1)
     )
     is_synthetic_noise = False
     
