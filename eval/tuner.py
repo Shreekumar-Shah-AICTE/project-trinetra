@@ -95,13 +95,14 @@ def evaluate_ranking(ranked_ids: list[str], gold: dict[str, float], ideal_dcg_10
     if n_relevant == 0:
         mapv = 0.0
     else:
+        divisor = min(n_relevant, len(ranked_ids))
         hits = 0
         ap = 0.0
         for i, cid in enumerate(ranked_ids, start=1):
             if gold.get(cid, 0.0) >= 1.0:
                 hits += 1
                 ap += hits / i
-        mapv = ap / n_relevant
+        mapv = ap / divisor
         
     return 0.50 * ndcg10 + 0.30 * ndcg50 + 0.15 * mapv + 0.05 * p10
 

@@ -45,9 +45,8 @@ def verify_reasoning_facts(candidate: dict, reasoning: str) -> dict:
                 f"YOE mismatch: Claimed {claimed_yoe} yrs in reasoning, but profile has {actual_yoe} yrs."
             )
             
-    # 2. Verify Named Employers (e.g. "at Google" or "at Zomato")
-    # Matches 'at Word' where Word starts with uppercase letter
-    companies_in_reasoning = re.findall(r"at\s+([A-Z][a-zA-Z0-9]+)", reasoning)
+    # Matches "at Company Name", "at Yellow.ai", "at L&T", and stops before sentence-ending periods
+    companies_in_reasoning = re.findall(r"at\s+([A-Z][a-zA-Z0-9\&\-]+(?:\.[a-z]+)?(?:\s+[A-Z][a-zA-Z0-9\&\-]+)*)", reasoning)
     
     actual_companies = {j.get("company", "").lower() for j in career if j.get("company")}
     if profile.get("current_company"):

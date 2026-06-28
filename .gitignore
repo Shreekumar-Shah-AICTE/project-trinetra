@@ -37,3 +37,20 @@ Thumbs.db
 # Environment variables (never commit secrets)
 .env
 .env.local
+
+# Extra / Temporary Evaluation Files
+eval/generate_llm_input.py
+eval/llm_benchmark_input.txt
+eval/red_team_prompt.txt
+eval/adversarial_profiles.txt
+eval/llm_output.json
+eval/trinetra_benchmark_output.csv
+eval/check_llm_top20.py
+eval/compare_outputs.py
+eval/generate_adversarial_set.py
+eval/generate_benchmark.py
+eval/inspect_flagged.py
+eval/test_guard.py
+eval/gold_hfsb.csv
+eval/gold_auto.csv
+submission_baseline.csv

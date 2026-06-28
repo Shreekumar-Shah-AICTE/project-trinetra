@@ -635,13 +635,15 @@ def main():
                 
         if top_10_candidates:
             brief_path = os.path.join(os.path.dirname(args.submission), "eval", "interview_defense.txt")
-            generate_defense_brief(top_10_candidates, brief_path)
+            gold_labels = load_gold(args.gold)
+            generate_defense_brief(top_10_candidates, brief_path, gold_labels)
         else:
             print("  [SKIP] Could not load top-10 candidates for defense card.")
         print()
 
     # Save to iteration tracker
     if args.run_name:
+        ranked_ids = load_ranking(args.submission)
         run = save_run(
             run_name=args.run_name,
             metrics=metrics_result,
@@ -649,6 +651,7 @@ def main():
             reasoning_score=reasoning_result.get("score", 0),
             gem_stats=gem_result,
             notes=args.notes,
+            top_100_ids=ranked_ids[:100],
         )
         print(f"  Run saved as: {run['name']}")
 

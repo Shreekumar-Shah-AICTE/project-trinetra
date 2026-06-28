@@ -37,7 +37,7 @@ def _parse_date(d_str: Optional[str]) -> Optional[datetime]:
     if not d_str:
         return None
     try:
-        return datetime.strptime(d_str, "%Y-%m-%d")
+        return datetime.strptime(str(d_str).strip()[:10], "%Y-%m-%d")
     except (ValueError, TypeError):
         return None
 
@@ -425,10 +425,11 @@ def run_guard_gate(candidate: dict) -> dict:
         ref_date = datetime(2026, 5, 20)
         effective_end = end if (end and not is_current) else ref_date
         if start and effective_end:
-            actual_months = _months_between(start, effective_end)
-            if claimed_months >= 96 and actual_months <= 36:
-                has_tenure_fraud = True
-                break
+            if start <= effective_end:
+                actual_months = _months_between(start, effective_end)
+                if claimed_months >= 96 and actual_months <= 36:
+                    has_tenure_fraud = True
+                    break
                 
     has_edu_fraud = False
     yoe = profile.get("years_of_experience", 0)
@@ -583,6 +584,21 @@ def run_guard_gate(candidate: dict) -> dict:
     missing_links = sum([not verified_email, not verified_phone, not linkedin])
     if missing_links >= 2:
         trust_score -= 0.15
+        
+    # H. Architecture Astronaut Check (Hands-off managers / pure architects)
+    career_history = candidate.get("career_history", [])
+    current_job = career_history[0] if career_history else {}
+    current_title = (current_job.get("title") or "").lower()
+    current_desc = (current_job.get("description") or "").lower()
+    
+    is_hands_off_manager = any(kw in current_title for kw in ["director", "vp", "head", "manager"])
+    is_pure_architect = "architect" in current_title and "engineer" not in current_title
+    
+    hands_on_markers = ["wrote", "coded", "developed", "hands-on", "implemented", "python", "git"]
+    has_hands_on_proof = any(marker in current_desc for marker in hands_on_markers)
+    
+    if (is_hands_off_manager or is_pure_architect) and not has_hands_on_proof:
+        trust_score -= 0.35  # Severe penalty pushing them down to C/D Grade
     
     trust_score = max(0.0, min(1.0, trust_score))
     

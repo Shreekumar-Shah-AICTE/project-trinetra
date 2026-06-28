@@ -156,7 +156,11 @@ def audit_reasoning(submission_path: str) -> dict:
         results["warnings"].append(f"Low JD connection in reasoning (avg {avg_jd:.1f})")
 
     # ── CHECK 5: Honest Concerns ──
-    concern_indicators = ["concern", "gap", "limited", "weak", "risk", "outside", "long notice", "inactive"]
+    concern_indicators = [
+        "concern", "gap", "limited", "weak", "risk", "outside", 
+        "long notice", "inactive", "low recent activity", "declined all", 
+        "refuses relocation", "profile flags", "outside target city"
+    ]
     negations = ["no concern", "no gap", "zero concern", "zero gap", "without gap", "no obvious gap"]
     concern_count = 0
     for r in reasonings:

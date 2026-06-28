@@ -49,19 +49,22 @@ def build_reasoning(
             intro = f"{title} with {yoe:.1f} yrs experience."
         
     # 2. Build Skill Alignment (reference matched concepts)
-    skills_matched = []
     career_text = " ".join(j.get("description", "") for j in career).lower()
-    tech_keywords = [
-        "embeddings", "vector search", "faiss", "ranking", "retrieval", "ndcg", 
-        "recommendation", "hybrid search", "qdrant", "pinecone", "milvus", "bm25", 
-        "reranking", "cross-encoder", "pgvector"
-    ]
-    for concept in tech_keywords:
-        if concept in career_text:
-            skills_matched.append(concept)
+    
+    systems = [s for s in ["retrieval", "ranking", "recommendation", "hybrid search", "semantic search"] if s in career_text]
+    tools = [t for t in ["faiss", "bm25", "pinecone", "qdrant", "milvus", "cross-encoder", "embeddings"] if t in career_text]
+    metrics = [m for m in ["ndcg", "mrr", "map"] if m in career_text]
+    
+    parts = []
+    if systems:
+        parts.append(f"building {', '.join(systems[:2])} systems")
+    if tools:
+        parts.append(f"using {', '.join(tools[:2])}")
+    if metrics:
+        parts.append(f"evaluated with {', '.join(metrics[:1])}")
             
-    if skills_matched:
-        skill_str = f"Demonstrated career experience building {', '.join(skills_matched[:3])} pipelines."
+    if parts:
+        skill_str = "Demonstrated career experience " + ", ".join(parts) + "."
     else:
         skill_str = "Possesses foundational software engineering and adjacent AI/ML concepts."
         
@@ -108,7 +111,7 @@ def build_reasoning(
         
     # 5. Assemble into 1-2 sentence recruiter brief
     sentences = [intro]
-    if skills_matched:
+    if parts:
         sentences.append(skill_str)
     if loc_avail_str:
         sentences.append(loc_avail_str)

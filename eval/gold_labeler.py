@@ -173,8 +173,8 @@ def _is_honeypot(candidate: dict) -> bool:
         if start and end and not job.get("is_current", False):
             try:
                 from datetime import datetime
-                s = datetime.strptime(start, "%Y-%m-%d")
-                e = datetime.strptime(end, "%Y-%m-%d")
+                s = datetime.strptime(str(start).strip()[:10], "%Y-%m-%d")
+                e = datetime.strptime(str(end).strip()[:10], "%Y-%m-%d")
                 actual_months = (e.year - s.year) * 12 + (e.month - s.month)
                 if actual_months < 0:
                     chrono_violations += 1
@@ -233,7 +233,15 @@ def _describes_real_systems(text: str) -> bool:
     """Does the career text show BUILDING relevant systems?"""
     import re
     has_build = any(re.search(r'\b' + re.escape(v) + r'\b', text) for v in BUILD_VERBS)
-    has_sys = any(re.search(r'\b' + re.escape(s) + r'\b', text) for s in RELEVANT_SYSTEMS)
+    
+    def match_sys(s):
+        if s == "rank":
+            pattern = r'\b' + re.escape(s) + r'(?:s|ed|ing|er|ers)?\b'
+        else:
+            pattern = r'\b' + re.escape(s) + r'(?:s|es)?\b'
+        return bool(re.search(pattern, text))
+        
+    has_sys = any(match_sys(s) for s in RELEVANT_SYSTEMS)
     return has_build and has_sys
 
 
@@ -461,6 +469,20 @@ def label_candidate(candidate: dict) -> int:
     acceptance_rate = signals.get("offer_acceptance_rate")
     if acceptance_rate == 0.0:
         demotion += 1  # Demote for declining all previous offers
+
+    # I. Architecture Astronaut Check (Hands-off managers / pure architects)
+    current_job = career_history[0] if career_history else {}
+    current_title = (current_job.get("title") or "").lower()
+    current_desc = (current_job.get("description") or "").lower()
+    
+    is_hands_off_manager = any(kw in current_title for kw in ["director", "vp", "head", "manager"])
+    is_pure_architect = "architect" in current_title and "engineer" not in current_title
+    
+    hands_on_markers = ["wrote", "coded", "developed", "hands-on", "implemented", "python", "git"]
+    has_hands_on_proof = any(marker in current_desc for marker in hands_on_markers)
+    
+    if (is_hands_off_manager or is_pure_architect) and not has_hands_on_proof:
+        demotion += 2  # Demote heavily for being a hands-off architect/manager
 
     final_tier = max(0, base_tier - demotion)
     if is_wrapper:

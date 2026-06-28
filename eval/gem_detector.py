@@ -86,10 +86,6 @@ def is_gem(candidate: dict) -> bool:
     headline = (profile.get("headline") or "").lower()
     yoe = profile.get("years_of_experience", 0)
 
-    # Must NOT have an AI title (otherwise it's not a "hidden" gem)
-    if any(t in title or t in headline for t in AI_TITLES):
-        return False
-
     # Must be in reasonable experience range
     if not (4.0 <= yoe <= 11.0):
         return False
@@ -98,9 +94,24 @@ def is_gem(candidate: dict) -> bool:
     career_text = _get_career_text(candidate)
     import re
     has_build = any(re.search(r'\b' + re.escape(v) + r'\b', career_text) for v in BUILD_VERBS)
-    has_system = any(re.search(r'\b' + re.escape(s) + r'\b', career_text) for s in RELEVANT_SYSTEMS)
+    
+    def match_sys(s):
+        if s == "rank":
+            pattern = r'\b' + re.escape(s) + r'(?:s|ed|ing|er|ers)?\b'
+        else:
+            pattern = r'\b' + re.escape(s) + r'(?:s|es)?\b'
+        return bool(re.search(pattern, career_text))
+        
+    has_system = any(match_sys(s) for s in RELEVANT_SYSTEMS)
 
-    return has_build and has_system
+    skills_list = [s.get("name", "").lower() for s in candidate.get("skills", [])]
+    ai_buzzwords = {"rag", "pinecone", "llm", "langchain", "qdrant", "vector database", "faiss"}
+    has_buzzwords = any(buzz in skill for skill in skills_list for buzz in ai_buzzwords)
+    
+    is_non_ai_title = not any(t in title or t in headline for t in AI_TITLES)
+    is_keyword_poor = not has_buzzwords
+
+    return has_build and has_system and (is_non_ai_title or is_keyword_poor)
 
 
 def load_submission_ranks(path: str) -> dict[str, int]:

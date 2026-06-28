@@ -38,7 +38,7 @@ def reciprocal_rank_fusion(
         dimension_weights = {
             "skill": 1.6,
             "career": 1.6,
-            "behavioral": 1.0,
+            "behavioral": 0.8,
             "trust": 0.8,
             "semantic": 1.0,
         }

@@ -12,6 +12,7 @@ Dimensions:
 """
 
 import math
+import re
 from datetime import datetime
 from typing import Optional
 
@@ -98,8 +99,16 @@ def score_skill_relevance(candidate: dict, text_fields: dict) -> dict:
         "search engine", "search system", "search infrastructure"
     }
     
-    has_build_verb = any(v in career_desc for v in BUILD_VERBS)
-    has_relevant_sys = any(s in career_desc for s in RELEVANT_SYSTEMS)
+    has_build_verb = any(re.search(r'\b' + re.escape(v) + r'\b', career_desc) for v in BUILD_VERBS)
+    
+    def _match_sys(s):
+        if s == "rank":
+            pattern = r'\b' + re.escape(s) + r'(?:s|ed|ing|er|ers)?\b'
+        else:
+            pattern = r'\b' + re.escape(s) + r'(?:s|es)?\b'
+        return bool(re.search(pattern, career_desc))
+        
+    has_relevant_sys = any(_match_sys(s) for s in RELEVANT_SYSTEMS)
     has_real_systems = has_build_verb and has_relevant_sys
     
     # 2. LangChain Wrapper Check (Aligns with is_wrapper in gold_labeler)
@@ -395,7 +404,7 @@ def score_behavioral_availability(candidate: dict) -> dict:
     last_active_str = signals.get("last_active_date", "")
     if last_active_str:
         try:
-            last_active = datetime.strptime(last_active_str, "%Y-%m-%d")
+            last_active = datetime.strptime(str(last_active_str).strip()[:10], "%Y-%m-%d")
             days_inactive = (datetime(2026, 6, 1) - last_active).days
             if days_inactive <= 7:
                 activity_score = 1.0
@@ -441,7 +450,12 @@ def score_behavioral_availability(candidate: dict) -> dict:
     
     # ── GitHub Activity ──
     github = signals.get("github_activity_score", -1)
-    github_score = max(0, github) / 100.0 if github >= 0 else 0.3  # -1 = no github
+    if github >= 80:
+        github_score = 1.0  # Heavily reward high-open source engagement
+    elif github >= 0:
+        github_score = github / 100.0
+    else:
+        github_score = 0.1  # Low default (0.1) for closed-source/no GitHub
     
     # ── Willing to Relocate ──
     relocate = 0.8 if signals.get("willing_to_relocate", False) else 0.4

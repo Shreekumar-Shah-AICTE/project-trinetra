@@ -61,6 +61,7 @@ def save_run(
     reasoning_score: float = None,
     gem_stats: dict = None,
     notes: str = "",
+    top_100_ids: list = None,
 ) -> dict:
     """Save a complete eval run to history.
     
@@ -71,6 +72,7 @@ def save_run(
         reasoning_score: Overall reasoning audit score
         gem_stats: Gem detection stats
         notes: Optional human notes about what changed
+        top_100_ids: Optional list of top 100 candidate IDs for volatility analysis
     
     Returns:
         The saved run record.
@@ -85,6 +87,7 @@ def save_run(
         "reasoning_score": reasoning_score,
         "gem_stats": gem_stats or {},
         "notes": notes,
+        "top_100_ids": top_100_ids or [],
     }
 
     # Check for duplicate names and auto-suffix
@@ -193,6 +196,15 @@ def compare_runs(old_name: str, new_name: str) -> dict:
         old_g100 = old_gems.get("gems_in_top100", "?")
         new_g100 = new_gems.get("gems_in_top100", "?")
         print(f"  Gems in Top 100:     {old_g100} -> {new_g100}")
+
+    # Check Top 100 Overlap
+    old_ids = set(old_run.get("top_100_ids", []))
+    new_ids = set(new_run.get("top_100_ids", []))
+    if old_ids and new_ids:
+        overlap = len(old_ids.intersection(new_ids))
+        print(f"  Top 100 Overlap:     {overlap}/100 candidates remained")
+        if overlap < 50:
+            print("  ⚠️ WARNING: High ranking volatility! Over 50% of your shortlist changed.")
 
     if old_run.get("notes"):
         print(f"\n  OLD notes: {old_run['notes']}")
