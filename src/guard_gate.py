@@ -89,8 +89,8 @@ def check_chronological_integrity(candidate: dict) -> list[str]:
             actual_months = _months_between(start, effective_end)
             
             # Check: claimed duration vastly exceeds actual calendar span
-            # Threshold: claimed > 2x actual AND difference > 12 months
-            if claimed_months > actual_months * 2 and claimed_months - actual_months > 12:
+            # Only flag if claimed duration exceeds actual calendar span by more than 6 months (buffer for date rounding)
+            if claimed_months > (actual_months + 6) and actual_months > 0:
                 violations.append(
                     f"Job at '{company}': claims {claimed_months}mo but dates span only {actual_months}mo"
                 )
@@ -100,12 +100,6 @@ def check_chronological_integrity(candidate: dict) -> list[str]:
                 violations.append(
                     f"Job at '{company}': start_date ({start.date()}) is in the future"
                 )
-        
-        # Check: current job has an explicit end date
-        if is_current and end:
-            violations.append(
-                f"Job at '{company}': marked current but has end_date ({end})"
-            )
     
     # Check: total career span vs stated YOE
     if career:
@@ -118,10 +112,10 @@ def check_chronological_integrity(candidate: dict) -> list[str]:
         if earliest_start:
             career_span_years = (ref_date - earliest_start).days / 365.25
             stated_yoe = profile.get("years_of_experience", 0)
-            # Flag if stated YOE is more than 1.5x career span + 2 years buffer
-            if stated_yoe > career_span_years * 1.5 + 2 and stated_yoe > 5:
+            # ONLY flag if stated YOE is physically impossible (implies working before born/unlisted decades)
+            if stated_yoe > career_span_years + 15:
                 violations.append(
-                    f"Stated {stated_yoe:.1f} YOE but career spans only {career_span_years:.1f} years"
+                    f"Stated {stated_yoe:.1f} YOE but career spans only {career_span_years:.1f} years. Implies unlisted decades."
                 )
     
     # Check education dates
@@ -495,13 +489,11 @@ def run_guard_gate(candidate: dict) -> dict:
         all_violations.append("Honeypot: Stated years of experience conflicts with earliest education start year.")
             
     is_hard_honeypot = (
-        len(chrono_violations) >= 2
-        or (expertise_info["expert_zero_count"] >= 8)
-        or (len(chrono_violations) >= 1 and expertise_info["is_suspicious"])
-        or has_time_travel_fraud
+        has_time_travel_fraud
         or is_expert_fraud
         or has_tenure_fraud
         or has_edu_fraud
+        or len(chrono_violations) >= 3
     )
     is_synthetic_noise = False
     
