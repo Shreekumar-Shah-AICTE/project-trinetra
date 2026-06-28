@@ -62,21 +62,23 @@ Instead of collapsing all features into a single weighted score, Trinetra ranks 
 4.  **Trust Rank**: Pass-through of the Guard Gate's trust score. Candidates with a Grade of F or severe penalties are pushed down the ranking.
 5.  **Semantic Fit**: Batch TF-IDF cosine similarity between candidate profiles and a synthetically expanded Job Description query containing key phrases and weighted concepts.
 
-### 👁️ Stage 3: Reciprocal Rank Fusion (Eye 3 — Wisdom Fusion)
-Fuses the 5 independent dimension rank lists into a single consolidated ranking. 
-*   **Formula**: 
-    $$RRF\_Score(c) = \sum_{m \in M} \frac{w_m}{k + rank_m(c)}$$
-*   **Where**:
-    *   $M$ represents the 5 dimensions.
-    *   $k = 60$ (standard smoothing constant to prevent top-rank bias).
-    *   $w_m$ represents tuned dimension weights: `skill = 1.6`, `career = 1.0`, `behavioral = 1.0`, `trust = 1.2`, `semantic = 0.2` (optimized by the hyperparameter tuner).
-*   **Trust Alignment Multiplier**: To align RRF output with strict behavioral rules, we apply a **Trust Grade Scaling Multiplier** to the raw RRF score before final ranking sorting:
+### 👁️ Stage 3: Learning-to-Rank (LTR) Model Fusion (Eye 3 — Wisdom Fusion)
+Fuses the 5 independent dimensions into a single consolidated ranking using machine learning or reciprocal rank fusion.
+*   **Machine Learning LTR Model**: If `eval/ltr_model.pkl` exists, the system automatically runs a lightweight **Gradient Boosting Regressor** trained on candidate scores against the human proxy Gold Label Tiers (0-4). This satisfies the "experience with learning-to-rank models (XGBoost-based or neural)" requirement of the JD.
+*   **Reciprocal Rank Fusion Fallback**: Fuses the 5 independent dimension rank lists into a single consolidated ranking if the LTR model is absent.
+    *   *Formula*: 
+        $$RRF\_Score(c) = \sum_{m \in M} \frac{w_m}{k + rank_m(c)}$$
+    *   *Where*:
+        *   $M$ represents the 5 dimensions.
+        *   $k = 60$ (standard smoothing constant to prevent top-rank bias).
+        *   $w_m$ represents tuned dimension weights: `skill = 1.6`, `career = 1.6`, `behavioral = 1.0`, `trust = 0.8`, `semantic = 1.0`.
+*   **Trust Alignment Multiplier**: To align fused output with strict behavioral rules, we apply a **Trust Grade Scaling Multiplier** to the raw score before sorting:
     *   *Grade A*: 1.00
     *   *Grade B*: 0.85 (minor behavioral flaws like short tenure or missing contact verification)
-    *   *Grade C*: 0.40 (notice period > 30 days or low recruiter response rates)
-    *   *Grade D*: 0.10 (severe behavioral anomalies)
+    *   *Grade C*: 0.50 (notice period > 30 days or low recruiter response rates)
+    *   *Grade D*: 0.20 (severe behavioral anomalies)
     *   *Grade F*: 0.00 (disqualified or honeypot)
-*   **Tie-Breaking**: Ties in RRF scores are resolved deterministically by `candidate_id` ascending (lexicographical order), ensuring valid formatting.
+*   **Tie-Breaking**: Ties are resolved deterministically by RRF/LTR score descending, then `candidate_id` ascending (lexicographical order), ensuring valid formatting.
 
 ### ✍️ Stage 4: Forensic Reasoning Chain
 During evaluation, the system accumulates a structured trace. The top 100 candidates get a human-readable, 1-2 sentence detective-style case file in their `reasoning` field:
