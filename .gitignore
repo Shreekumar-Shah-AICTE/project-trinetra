@@ -1,5 +1,7 @@
 # Data files (never commit the 465MB dataset)
-data/
+data/*
+!data/trinetra.db
+!data/sample_candidates.json
 *.jsonl
 *.jsonl.gz
 
