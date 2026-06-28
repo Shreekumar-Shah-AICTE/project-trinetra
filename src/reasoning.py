@@ -19,14 +19,8 @@ def build_reasoning(
 ) -> str:
     """
     Build a forensic-quality reasoning string for the submission CSV.
-    
-    Requirements from submission spec:
-    - 1-2 sentences
-    - Reference specific facts from candidate's profile
-    - Connect to JD requirements
-    - Acknowledge gaps honestly
-    - No hallucination
-    - Variation between candidates (not templated)
+    Generates natural, fluent 1-2 sentence recruiter briefs matching
+    exact profile facts to JD requirements, and highlighting honest concerns.
     """
     profile = candidate.get("profile", {})
     signals = candidate.get("redrob_signals", {})
@@ -36,95 +30,108 @@ def build_reasoning(
     title = profile.get("current_title", "Unknown")
     company = profile.get("current_company", "Unknown")
     location = profile.get("location", "Unknown")
-    headline = profile.get("headline", "")
     
-    # ── Build reasoning segments ──
-    segments = []
-    concerns = []
+    # 1. Build Introduction (Product lineage or company context)
+    product_companies = guard_result.get("company_info", {}).get("product_companies", [])
+    current_company = company if company and company.lower() != "unknown" else (product_companies[0] if product_companies else "")
     
-    # 1. Identity + Trust
-    trust_grade = guard_result.get("trust_grade", "?")
-    if trust_grade in ("A", "B"):
-        segments.append(f"[Trust: {trust_grade}]")
-    elif trust_grade == "C":
-        segments.append(f"[Trust: {trust_grade} — minor concerns]")
-    else:
-        segments.append(f"[Trust: {trust_grade} — flagged]")
-        if guard_result.get("violations"):
-            concerns.append(guard_result["violations"][0])
-    
-    # 2. Career summary (vary by career profile type)
-    if career_result.get("product_jobs", 0) > 0:
-        product_companies = guard_result.get("company_info", {}).get("product_companies", [])
+    if current_company and current_company.lower() != "unknown":
         if product_companies:
-            company_list = ", ".join(product_companies[:3])
-            segments.append(f"{yoe:.1f} yrs; product lineage: {company_list}")
+            company_list = ", ".join(product_companies[:2])
+            intro = f"{title} at {current_company} with {yoe:.1f} yrs experience, showing strong product lineage at {company_list}."
         else:
-            segments.append(f"{yoe:.1f} yrs as {title} at {company}")
+            intro = f"{title} at {current_company} with {yoe:.1f} yrs experience."
     else:
-        segments.append(f"{yoe:.1f} yrs as {title}")
-    
-    # 3. Skill evidence (reference specific JD matches)
-    core_match = skill_result.get("core_match", 0)
-    if core_match >= 0.6:
-        # Find specific matched concepts from career
-        career_text = " ".join(j.get("description", "") for j in career).lower()
-        matched_concepts = []
-        for concept in ["embeddings", "vector search", "faiss", "ranking", "retrieval",
-                        "bm25", "hybrid search", "ndcg", "recommendation", "search"]:
-            if concept in career_text:
-                matched_concepts.append(concept)
-        if matched_concepts:
-            segments.append(f"career evidence: {', '.join(matched_concepts[:4])}")
+        if product_companies:
+            company_list = ", ".join(product_companies[:2])
+            intro = f"{title} with {yoe:.1f} yrs experience, showing strong product lineage at {company_list}."
         else:
-            segments.append("strong JD skill alignment")
-    elif core_match >= 0.3:
-        segments.append("moderate JD alignment")
+            intro = f"{title} with {yoe:.1f} yrs experience."
+        
+    # 2. Build Skill Alignment (reference matched concepts)
+    skills_matched = []
+    career_text = " ".join(j.get("description", "") for j in career).lower()
+    tech_keywords = [
+        "embeddings", "vector search", "faiss", "ranking", "retrieval", "ndcg", 
+        "recommendation", "hybrid search", "qdrant", "pinecone", "milvus", "bm25", 
+        "reranking", "cross-encoder", "pgvector"
+    ]
+    for concept in tech_keywords:
+        if concept in career_text:
+            skills_matched.append(concept)
+            
+    if skills_matched:
+        skill_str = f"Demonstrated career experience building {', '.join(skills_matched[:3])} pipelines."
     else:
-        concerns.append("limited core skill evidence")
-    
-    # 4. Production evidence
-    if skill_result.get("production_match", 0) >= 0.4:
-        segments.append("production deployment experience")
-    
-    # 5. Behavioral highlights (pick the most notable)
+        skill_str = "Possesses foundational software engineering and adjacent AI/ML concepts."
+        
+    # 3. Build Location & Notice Availability
     notice_days = behavioral_result.get("notice_days", 90)
-    if notice_days <= 30:
-        segments.append(f"{notice_days}d notice")
-    elif notice_days >= 90:
-        concerns.append(f"long notice ({notice_days}d)")
+    willing_reloc = signals.get("willing_to_relocate", True)
+    response_rate = signals.get("recruiter_response_rate", 0.0)
     
-    if behavioral_result.get("activity_score", 0) >= 0.8:
-        segments.append("recently active")
-    elif behavioral_result.get("activity_score", 0) <= 0.3:
-        concerns.append("inactive >90d")
-    
-    # 6. Location
+    loc_avail = []
     if career_result.get("location_score", 0) >= 0.8:
-        segments.append(f"{location}")
-    elif career_result.get("location_score", 0) <= 0.4:
-        if not signals.get("willing_to_relocate", False):
-            concerns.append(f"outside target geography ({location})")
+        loc_avail.append(f"based locally in {location}")
+    elif willing_reloc:
+        loc_avail.append("willing to relocate")
+        
+    if notice_days <= 30:
+        loc_avail.append(f"immediate joiner ({notice_days}d notice)")
+        
+    if response_rate >= 0.85:
+        loc_avail.append(f"highly responsive ({response_rate:.0%} response rate)")
+        
+    loc_avail_str = ""
+    if loc_avail:
+        loc_avail_str = f"Candidate is {', '.join(loc_avail)}."
+        
+    # 4. Build Concerns
+    concerns = []
+    trust_grade = guard_result.get("trust_grade", "?")
+    if trust_grade not in ("A", "B"):
+        concerns.append(f"has Trust Grade {trust_grade} with profile flags")
+    if notice_days >= 90:
+        concerns.append(f"has a long notice period of {notice_days} days")
+    if behavioral_result.get("activity_score", 0) <= 0.3:
+        concerns.append("shows low recent activity")
+    if not willing_reloc and career_result.get("location_score", 0) <= 0.4:
+        concerns.append(f"is located outside target city ({location}) and refuses relocation")
     
-    # 7. Rank dimension breakdown
+    offer_rate = signals.get("offer_acceptance_rate", 1.0)
+    if offer_rate == 0.0:
+        concerns.append("declined all previous offers")
+        
+    concern_str = ""
+    if concerns:
+        concern_str = f"Concern: candidate {'; '.join(concerns[:2])}."
+        
+    # 5. Assemble into 1-2 sentence recruiter brief
+    sentences = [intro]
+    if skills_matched:
+        sentences.append(skill_str)
+    if loc_avail_str:
+        sentences.append(loc_avail_str)
+    if concern_str:
+        sentences.append(concern_str)
+        
+    if len(sentences) > 2:
+        body = " ".join(sentences[:2])
+        if concern_str:
+            body += " " + concern_str
+    else:
+        body = " ".join(sentences)
+        
+    # 6. Rank Metadata
     skill_rank = dimension_ranks.get("skill", "?")
     career_rank = dimension_ranks.get("career", "?")
     behavioral_rank = dimension_ranks.get("behavioral", "?")
     trust_rank = dimension_ranks.get("trust", "?")
+    rank_meta = f"[RRF Rank #{final_rank} | S#{skill_rank}/C#{career_rank}/B#{behavioral_rank}/T#{trust_rank}]"
     
-    rank_str = f"Dim ranks: S#{skill_rank}/C#{career_rank}/B#{behavioral_rank}/T#{trust_rank}"
+    reasoning = f"{body} {rank_meta}"
     
-    # ── Assemble reasoning ──
-    main_text = "; ".join(segments)
-    
-    if concerns:
-        concern_text = "; ".join(concerns[:2])
-        reasoning = f"{main_text}. Concerns: {concern_text}. {rank_str}"
-    else:
-        reasoning = f"{main_text}. {rank_str}"
-    
-    # Ensure within spec: 1-2 sentences, reasonable length
     if len(reasoning) > 350:
         reasoning = reasoning[:347] + "..."
-    
+        
     return reasoning

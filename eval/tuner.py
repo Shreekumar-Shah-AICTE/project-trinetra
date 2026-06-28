@@ -106,17 +106,17 @@ def evaluate_ranking(ranked_ids: list[str], gold: dict[str, float], ideal_dcg_10
     return 0.50 * ndcg10 + 0.30 * ndcg50 + 0.15 * mapv + 0.05 * p10
 
 
-def run_optimizer():
+def run_optimizer(db_path, gold_path):
     print()
     print("  ====================================================")
     print("  🔱 TRINETRA HYPERPARAMETER OPTIMIZER (THO)")
     print("  ====================================================")
     print("  Loading records from SQLite database...")
     
-    scored_candidates = load_scores_from_db(DB_PATH)
+    scored_candidates = load_scores_from_db(db_path)
     print(f"  Loaded {len(scored_candidates):,} active candidates.")
     
-    gold = load_gold_labels(GOLD_PATH)
+    gold = load_gold_labels(gold_path)
     print(f"  Loaded {len(gold):,} gold labels.")
     
     # Precalculate ideal DCGs and totals for speed
@@ -164,8 +164,9 @@ def run_optimizer():
     best_runs = []
     checked = 0
     
-    # Keep a lookup for trust grades
+    # Keep a lookup for trust grades and scores
     trust_grades = {c["candidate_id"]: c["trust_grade"] for c in scored_candidates}
+    trust_scores = {c["candidate_id"]: c["trust_score"] for c in scored_candidates}
     
     # Pre-render flat candidate data for maximum iteration speed
     cids = list(candidate_ranks.keys())
@@ -173,6 +174,7 @@ def run_optimizer():
     for cid in cids:
         ranks = candidate_ranks[cid]
         grade = trust_grades.get(cid, "A")
+        t_score = trust_scores.get(cid, 1.0)
         candidate_data.append((
             cid,
             ranks["skill"],
@@ -180,7 +182,8 @@ def run_optimizer():
             ranks["behavioral"],
             ranks["trust"],
             ranks["semantic"],
-            grade
+            grade,
+            t_score
         ))
     
     for w_skill in w_skill_vals:
@@ -197,7 +200,7 @@ def run_optimizer():
                             
                             # Perform RRF calculations inline for maximum performance
                             rrf_scores = []
-                            for cid, r_skill, r_career, r_behavioral, r_trust, r_semantic, grade in candidate_data:
+                            for cid, r_skill, r_career, r_behavioral, r_trust, r_semantic, grade, t_score in candidate_data:
                                 score = (
                                     w_skill * (1.0 / (k + r_skill)) +
                                     w_career * (1.0 / (k + r_career)) +
@@ -206,17 +209,17 @@ def run_optimizer():
                                     w_semantic * (1.0 / (k + r_semantic))
                                 )
                                 
-                                # Apply trust grade multipliers to align with rank.py
-                                if grade == "A":
-                                    multiplier = 1.00
-                                elif grade == "B":
-                                    multiplier = 0.85
-                                elif grade == "C":
-                                    multiplier = 0.40
-                                elif grade == "D":
-                                    multiplier = 0.10
-                                else:
+                                # Apply trust grade/score multipliers matching rank.py
+                                if grade == "F":
                                     multiplier = 0.00
+                                elif t_score >= 0.99:
+                                    multiplier = 1.00
+                                elif t_score >= 0.84:
+                                    multiplier = 0.70
+                                elif t_score >= 0.69:
+                                    multiplier = 0.40
+                                else:
+                                    multiplier = 0.10
                                     
                                 rrf_scores.append((score * multiplier, cid))
                             
@@ -261,4 +264,10 @@ def run_optimizer():
 
 
 if __name__ == "__main__":
-    run_optimizer()
+    import argparse
+    parser = argparse.ArgumentParser(description="🔱 Trinetra Hyperparameter Optimizer")
+    parser.add_argument("--gold", default=str(GOLD_PATH), help="Path to gold labels CSV")
+    parser.add_argument("--db", default=str(DB_PATH), help="Path to SQLite DB")
+    args = parser.parse_args()
+    
+    run_optimizer(db_path=args.db, gold_path=args.gold)

@@ -215,17 +215,20 @@ def run_pipeline(
     # Apply Trust Grade multipliers to align with oracle's strict behavioral demotions
     fused_ranking = []
     for cid, score in raw_fused_ranking:
+        t_score = guard_results[cid]["trust_score"]
         grade = guard_results[cid]["trust_grade"]
-        if grade == "A":
-            multiplier = 1.00
-        elif grade == "B":
-            multiplier = 0.85
-        elif grade == "C":
-            multiplier = 0.40
-        elif grade == "D":
-            multiplier = 0.10
-        else:
+        
+        if grade == "F":
             multiplier = 0.00
+        elif t_score >= 0.99:  # Perfect trust (0 demotions)
+            multiplier = 1.00
+        elif t_score >= 0.84:  # 1 demotion
+            multiplier = 0.70
+        elif t_score >= 0.69:  # 2 demotions
+            multiplier = 0.40
+        else:                  # 3+ demotions
+            multiplier = 0.10
+            
         fused_ranking.append((cid, score * multiplier))
         
     # Re-sort after applying trust multipliers

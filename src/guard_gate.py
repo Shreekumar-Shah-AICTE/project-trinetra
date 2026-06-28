@@ -485,12 +485,22 @@ def run_guard_gate(candidate: dict) -> dict:
             
     if has_time_travel_fraud:
         all_violations.append("Honeypot: Candidate claims experience with a technology before its public release date.")
+        
+    if is_expert_fraud:
+        all_violations.append("Honeypot: Expert-level claims in 10+ skills with 0 months usage.")
+    if has_tenure_fraud:
+        all_violations.append("Honeypot: Impossible tenure duration claims (e.g. 8 years at a 3-year-old company).")
+    if has_edu_fraud:
+        all_violations.append("Honeypot: Stated years of experience conflicts with earliest education start year.")
             
     is_hard_honeypot = (
         len(chrono_violations) >= 2
         or (expertise_info["expert_zero_count"] >= 8)
         or (len(chrono_violations) >= 1 and expertise_info["is_suspicious"])
         or has_time_travel_fraud
+        or is_expert_fraud
+        or has_tenure_fraud
+        or has_edu_fraud
     )
     is_synthetic_noise = False
     

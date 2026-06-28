@@ -437,6 +437,198 @@
         "gems_in_top100": 12
       },
       "notes": ""
+    },
+    {
+      "name": "hfsb_tuned_weights",
+      "timestamp": "2026-06-28T17:56:06.771203",
+      "metrics": {
+        "NDCG@10": 0.7369513072464466,
+        "NDCG@50": 0.7785107034907944,
+        "MAP": 0.9882659551694529,
+        "P@10": 1.0,
+        "P@5": 1.0,
+        "composite": 0.8002687579458796
+      },
+      "honeypot_stats": {
+        "total_honeypots": 15,
+        "honeypots_in_top100": 0,
+        "honeypot_rate": 0.0
+      },
+      "reasoning_score": 1.0,
+      "gem_stats": {
+        "total_gems": 32,
+        "gems_in_top10": 0,
+        "gems_in_top100": 12
+      },
+      "notes": ""
+    },
+    {
+      "name": "hfsb_test_run",
+      "timestamp": "2026-06-28T17:56:51.186452",
+      "metrics": {
+        "NDCG@10": 0.7369513072464466,
+        "NDCG@50": 0.7785107034907944,
+        "MAP": 0.9882659551694529,
+        "P@10": 1.0,
+        "P@5": 1.0,
+        "composite": 0.8002687579458796
+      },
+      "honeypot_stats": {
+        "total_honeypots": 15,
+        "honeypots_in_top100": 0,
+        "honeypot_rate": 0.0
+      },
+      "reasoning_score": 1.0,
+      "gem_stats": {
+        "total_gems": 32,
+        "gems_in_top10": 0,
+        "gems_in_top100": 12
+      },
+      "notes": ""
+    },
+    {
+      "name": "gate_upgrade_test",
+      "timestamp": "2026-06-28T18:27:41.812687",
+      "metrics": {
+        "NDCG@10": 0.7369513072464466,
+        "NDCG@50": 0.7786189616708786,
+        "MAP": 0.9882659551694529,
+        "P@10": 1.0,
+        "P@5": 1.0,
+        "composite": 0.8003012353999048
+      },
+      "honeypot_stats": {
+        "total_honeypots": 16,
+        "honeypots_in_top100": 0,
+        "honeypot_rate": 0.0
+      },
+      "reasoning_score": 1.0,
+      "gem_stats": {
+        "total_gems": 32,
+        "gems_in_top10": 0,
+        "gems_in_top100": 12
+      },
+      "notes": ""
+    },
+    {
+      "name": "four_experiments_combined",
+      "timestamp": "2026-06-28T18:28:32.920145",
+      "metrics": {
+        "NDCG@10": 0.7369513072464466,
+        "NDCG@50": 0.7592316360484643,
+        "MAP": 0.9772012720725413,
+        "P@10": 1.0,
+        "P@5": 1.0,
+        "composite": 0.7928253352486438
+      },
+      "honeypot_stats": {
+        "total_honeypots": 16,
+        "honeypots_in_top100": 0,
+        "honeypot_rate": 0.0
+      },
+      "reasoning_score": 1.0,
+      "gem_stats": {
+        "total_gems": 32,
+        "gems_in_top10": 0,
+        "gems_in_top100": 12
+      },
+      "notes": ""
+    },
+    {
+      "name": "aligned_experiments_v1",
+      "timestamp": "2026-06-28T18:29:30.426083",
+      "metrics": {
+        "NDCG@10": 0.7369513072464466,
+        "NDCG@50": 0.7827017391332649,
+        "MAP": 0.9883836022282765,
+        "P@10": 1.0,
+        "P@5": 1.0,
+        "composite": 0.8015437156974443
+      },
+      "honeypot_stats": {
+        "total_honeypots": 16,
+        "honeypots_in_top100": 0,
+        "honeypot_rate": 0.0
+      },
+      "reasoning_score": 1.0,
+      "gem_stats": {
+        "total_gems": 32,
+        "gems_in_top10": 0,
+        "gems_in_top100": 12
+      },
+      "notes": ""
+    },
+    {
+      "name": "aligned_experiments_v2",
+      "timestamp": "2026-06-28T18:30:46.912497",
+      "metrics": {
+        "NDCG@10": 0.7822741540264518,
+        "NDCG@50": 0.7584986606428548,
+        "MAP": 0.9439799300510306,
+        "P@10": 0.9,
+        "P@5": 1.0,
+        "composite": 0.805283664713737
+      },
+      "honeypot_stats": {
+        "total_honeypots": 16,
+        "honeypots_in_top100": 0,
+        "honeypot_rate": 0.0
+      },
+      "reasoning_score": 1.0,
+      "gem_stats": {
+        "total_gems": 32,
+        "gems_in_top10": 2,
+        "gems_in_top100": 10
+      },
+      "notes": ""
+    },
+    {
+      "name": "aligned_experiments_v3",
+      "timestamp": "2026-06-28T18:31:38.877111",
+      "metrics": {
+        "NDCG@10": 0.8314763853950062,
+        "NDCG@50": 0.7809440685954693,
+        "MAP": 0.9427128023493868,
+        "P@10": 1.0,
+        "P@5": 1.0,
+        "composite": 0.841428333628552
+      },
+      "honeypot_stats": {
+        "total_honeypots": 16,
+        "honeypots_in_top100": 0,
+        "honeypot_rate": 0.0
+      },
+      "reasoning_score": 1.0,
+      "gem_stats": {
+        "total_gems": 32,
+        "gems_in_top10": 1,
+        "gems_in_top100": 9
+      },
+      "notes": ""
+    },
+    {
+      "name": "optimal_weights_test",
+      "timestamp": "2026-06-28T18:33:25.521142",
+      "metrics": {
+        "NDCG@10": 0.8393577084775254,
+        "NDCG@50": 0.847623540080532,
+        "MAP": 1.0,
+        "P@10": 1.0,
+        "P@5": 1.0,
+        "composite": 0.8739659162629224
+      },
+      "honeypot_stats": {
+        "total_honeypots": 16,
+        "honeypots_in_top100": 0,
+        "honeypot_rate": 0.0
+      },
+      "reasoning_score": 1.0,
+      "gem_stats": {
+        "total_gems": 32,
+        "gems_in_top10": 1,
+        "gems_in_top100": 10
+      },
+      "notes": ""
     }
   ]
 }

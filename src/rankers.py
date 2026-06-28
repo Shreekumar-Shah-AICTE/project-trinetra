@@ -28,6 +28,16 @@ from src.jd import (
 #  DIMENSION 1: SKILL RELEVANCE RANKER
 # ──────────────────────────────────────────────────────────────────────
 
+def _parse_date(d_str: Optional[str]) -> Optional[datetime]:
+    """Parse YYYY-MM-DD date string, returning None on failure."""
+    if not d_str:
+        return None
+    try:
+        return datetime.strptime(d_str.strip()[:10], "%Y-%m-%d")
+    except (ValueError, TypeError):
+        return None
+
+
 def score_skill_relevance(candidate: dict, text_fields: dict) -> dict:
     """
     Score how well a candidate's profile matches the JD's technical requirements.
@@ -66,6 +76,49 @@ def score_skill_relevance(candidate: dict, text_fields: dict) -> dict:
     
     # Normalize to 0-1 range (cap at 1.0)
     total_score = min(1.0, total_score)
+    
+    # ── Upgraded Verification Checks ──
+    career = candidate.get("career_history", [])
+    career_desc = " ".join([j.get("description", "") + " " + j.get("title", "") for j in career]).lower()
+    skills_list = {s.get("name", "").lower() for s in candidate.get("skills", [])}
+    
+    # 1. Systems Builder Check (Aligns with has_real_systems in gold_labeler)
+    BUILD_VERBS = {
+        "built", "build", "building", "shipped", "ship", "shipping",
+        "deployed", "deploying", "designed", "designing",
+        "implemented", "implementing", "developed", "developing",
+        "owned", "led", "launched", "launching", "scaled", "scaling",
+        "architected", "created", "engineered"
+    }
+    RELEVANT_SYSTEMS = {
+        "retrieval", "ranking", "rank", "recommendation", "recommender",
+        "search relevance", "semantic search", "embedding", "vector search",
+        "learning to rank", "faiss", "bm25", "personalization", "matching",
+        "information retrieval", "reranking", "re-ranking",
+        "search engine", "search system", "search infrastructure"
+    }
+    
+    has_build_verb = any(v in career_desc for v in BUILD_VERBS)
+    has_relevant_sys = any(s in career_desc for s in RELEVANT_SYSTEMS)
+    has_real_systems = has_build_verb and has_relevant_sys
+    
+    # 2. LangChain Wrapper Check (Aligns with is_wrapper in gold_labeler)
+    title = (candidate.get("profile", {}).get("current_title") or "").lower()
+    headline = (candidate.get("profile", {}).get("headline") or "").lower()
+    t = title + " " + headline
+    
+    is_senior_ai = any(kw in t for kw in ["machine learning", "ml engineer", "applied scientist", "data scientist", "nlp scientist", "applied ml", "search", "ranking", "recommend", "retrieval", "ai "])
+    has_langchain = "langchain" in skills_list or "langchain" in career_desc
+    is_wrapper = has_langchain and not is_senior_ai and len(skills_list) < 5
+    
+    # Apply modifiers
+    multiplier = 1.0
+    if is_wrapper:
+        multiplier = 0.40  # Wrapper penalty
+    elif has_real_systems:
+        multiplier = 1.25  # Systems builder boost
+        
+    total_score = min(1.0, total_score * multiplier)
     
     return {
         "skill_relevance_score": total_score,
@@ -171,11 +224,10 @@ def score_career_trajectory(candidate: dict) -> dict:
         product_ratio = 0.0
     
     # ── Career Stability (0-1) ──
-    # JD explicitly dislikes "title-chasers" switching every 1.5 years
+    avg_tenure_months = total_months / len(career) if len(career) > 0 else 0
     if len(career) == 0:
         stability_score = 0.0
     else:
-        avg_tenure_months = total_months / len(career) if len(career) > 0 else 0
         if avg_tenure_months >= 30:
             stability_score = 1.0
         elif avg_tenure_months >= 18:
@@ -184,6 +236,11 @@ def score_career_trajectory(candidate: dict) -> dict:
             stability_score = 0.4
         else:
             stability_score = 0.2
+            
+    # stability boost for long tenure
+    has_long_tenure = any(job.get("duration_months", 0) >= 36 for job in career)
+    if has_long_tenure:
+        stability_score = min(1.0, stability_score + 0.15)
     
     # ── Career Velocity Index (CVI) ──
     # Tracks growth velocity: current seniority level + title promotions + company caliber growth
@@ -231,6 +288,38 @@ def score_career_trajectory(candidate: dict) -> dict:
     # Combine growth indicators into Career Velocity Index
     cvi_score = current_seniority * 0.5 + title_growth * 0.3 + (company_growth + 0.8) / 1.8 * 0.2
     cvi_score = max(0.1, min(1.0, cvi_score))
+    
+    # ── Experiment 3: Title-Chaser Penalty ──
+    is_title_chaser = len(career) >= 3 and avg_tenure_months < 18
+    if is_title_chaser:
+        cvi_score *= 0.3
+        stability_score = min(stability_score, 0.2)
+        
+    # ── Senior AI Title Boost / Alignment ──
+    t = (profile.get("current_title", "") + " " + profile.get("headline", "")).lower().strip()
+    is_senior_ai = False
+    if any(kw in t for kw in ["machine learning", "ml engineer", "applied scientist", "data scientist", "nlp scientist", "applied ml"]):
+        is_senior_ai = True
+    elif any(kw in t for kw in ["search", "ranking", "recommend", "retrieval"]):
+        if any(role in t for role in ["engineer", "scientist", "developer", "lead", "staff", "senior", "specialist"]):
+            is_senior_ai = True
+    elif "ai " in t or " ai" in t or "artificial intelligence" in t:
+        if any(role in t for role in ["engineer", "scientist", "developer", "lead", "staff", "senior", "researcher"]):
+            is_senior_ai = True
+    elif "nlp engineer" in t or "senior nlp" in t or "research engineer" in t:
+        is_senior_ai = True
+        
+    adjacent_roles = ["software engineer", "backend engineer", "data engineer", "full stack", "platform engineer", "developer", "systems engineer", "programmer"]
+    is_adjacent = any(role in t for role in adjacent_roles)
+    
+    if is_senior_ai:
+        title_factor = 1.0
+    elif is_adjacent:
+        title_factor = 0.65
+    else:
+        title_factor = 0.30
+        
+    cvi_score = max(0.1, min(1.0, cvi_score * title_factor))
     
     # ── Location Fit (0-1) ──
     location = profile.get("location", "").lower()
