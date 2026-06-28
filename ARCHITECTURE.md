@@ -42,7 +42,7 @@ graph TD
 
 ### 👁️ Stage 1: The Guard Gate (Eye 1 — Trust Verification)
 The Guard Gate filters out invalid profiles and assigns a **Trust Grade (A, B, C, D, F)** to surviving candidates before any relevance computations occur.
-*   **Chronological Integrity Engine**: Cross-references job start and end dates with claimed duration months. Detects mathematically impossible spans (e.g., claiming 96 months of experience in a 24-month calendar gap) and overlapping college/work timelines.
+*   **Chronological Integrity Engine**: Cross-references job start and end dates with claimed duration months. Safely skips current job end-date anomalies, allows overlapping gigs/side-hustles by evaluating individual job limits, and prevents false positives for senior engineers who omit junior roles by only flagging stated YOE that mathematically implies working before birth (stated YOE > career span + 15).
 *   **Company Authenticity Classifier**: Categorizes employment history into:
     *   *Product Giants & High-Growth Startups* (Swiggy, Flipkart, Google, etc. — positive modifiers).
     *   *IT Consulting/Services* (TCS, Wipro, Infosys, etc. — down-weighted/penalized).
@@ -50,7 +50,7 @@ The Guard Gate filters out invalid profiles and assigns a **Trust Grade (A, B, C
 *   **Keyword Stuffer Detector**: Flags non-engineering/non-AI profiles (e.g., "Marketing Manager", "Accountant") that claim 5+ expert AI skills but have no career history mentioning AI.
 *   **Empty Expertise Filter**: Identifies profiles claiming "expert" status across multiple skills with exactly `duration_months: 0` and $\le$ 1 endorsement (classic synthetic honeypots).
 *   **Headline Blacklist Filter**: Immediately drops candidates in non-AI domains (e.g., Customer Support, Operations Manager, QA/Test Engineers, .NET developers) who lack actual ML career descriptions.
-*   **Honeypot Detector**: Triggers hard-honeypot status (Grade F) for extreme date/skill cheats and GenAI time-travel anomalies (e.g. claiming experience with technologies like Llama-2 or QLoRA before their release dates). Both behavioral honeypots and synthetic noise are completely pruned from the scoring pool.
+*   **Honeypot Detector**: Triggers hard-honeypot status (Grade F) only when severe mathematically impossible parameters are met (e.g. claiming experience with technologies like Llama-2 or QLoRA before their release dates, 10+ expert skills with 0 months duration, or $\ge$ 3 distinct chronological violations). This preserves normal but lazy candidates and recovers over 350 innocent senior engineers.
     *   *Adversarial Date Robustness*: All date-parsing utilities (`_parse_date` in Guard Gate, `_is_honeypot` in Gold Labeler, and Behavioral Recency in Ranker) slice date strings to force conformity to `YYYY-MM-DD` before parsing, preventing "fail-open" datetime bypasses (such as ISO-8601 strings causing unhandled exceptions).
 
 ### 👁️ Stage 2: Multi-Dimensional Scoring (Eye 2 — Independence)
