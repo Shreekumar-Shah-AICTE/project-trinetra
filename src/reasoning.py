@@ -92,10 +92,10 @@ def build_reasoning(
     # 4. Build Concerns
     concerns = []
     trust_grade = guard_result.get("trust_grade", "?")
-    if trust_grade not in ("A", "B"):
-        concerns.append(f"has Trust Grade {trust_grade} with profile flags")
-    if notice_days >= 90:
-        concerns.append(f"has a long notice period of {notice_days} days")
+    if trust_grade not in ("A",):
+        concerns.append(f"has Trust Grade {trust_grade} with minor profile flags")
+    if notice_days >= 45:
+        concerns.append(f"has a notice period of {notice_days} days")
     if behavioral_result.get("activity_score", 0) <= 0.3:
         concerns.append("shows low recent activity")
     if not willing_reloc and career_result.get("location_score", 0) <= 0.4:

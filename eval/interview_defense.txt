@@ -4,60 +4,54 @@ TRINETRA TALENT FORENSICS — INTERVIEW DEFENSE BRIEF
 Use this sheet to defend Project Trinetra's top-10 choices.
 Compiled for Shree Shah (Team O(1))
 
-🔱 RANK #1 DEFENSE PREP: Ayaan Goyal (CAND_0027691)
-  Current Role: NLP Engineer @ Haptik (YOE: 6.5 yrs)
-  Objections & Defense Strategy:
-    • Objection : Expected salary is high (up to 65.0 LPA).
-      Defense   : This is a founding team Senior AI Engineer role. Recruiting an engineer who has handled embedding drift in production justifies market-rate compensation. They will drive technical architecture and lead hires.
+🔱 RANK #1 DEFENSE PREP: Riya Dalal (CAND_0066999)
+  Current Role: Recommendation Systems Engineer @ Microsoft (YOE: 5.9 yrs)
+  • Status: Flawless fit. No significant risks or objections detected.
 
-🔱 RANK #2 DEFENSE PREP: Arjun Khanna (CAND_0081846)
+🔱 RANK #2 DEFENSE PREP: Anil Mukherjee (CAND_0068932)
+  Current Role: ML Engineer @ Krutrim (YOE: 5.2 yrs)
+  • Status: Flawless fit. No significant risks or objections detected.
+
+🔱 RANK #3 DEFENSE PREP: Krishna Mittal (CAND_0068811)
+  Current Role: Applied ML Engineer @ Freshworks (YOE: 8.0 yrs)
+  • Status: Flawless fit. No significant risks or objections detected.
+
+🔱 RANK #4 DEFENSE PREP: Arjun Khanna (CAND_0081846)
   Current Role: Lead AI Engineer @ Razorpay (YOE: 6.7 yrs)
   Objections & Defense Strategy:
     • Objection : Expected salary is high (up to 52.8 LPA).
       Defense   : This is a founding team Senior AI Engineer role. Recruiting an engineer who has handled embedding drift in production justifies market-rate compensation. They will drive technical architecture and lead hires.
 
-🔱 RANK #3 DEFENSE PREP: Dhruv Joshi (CAND_0042029)
-  Current Role: Senior Data Scientist @ Flipkart (YOE: 6.5 yrs)
+🔱 RANK #5 DEFENSE PREP: Ayaan Goyal (CAND_0027691)
+  Current Role: NLP Engineer @ Haptik (YOE: 6.5 yrs)
   Objections & Defense Strategy:
-    • Objection : Expected salary is high (up to 50.5 LPA).
+    • Objection : Expected salary is high (up to 65.0 LPA).
       Defense   : This is a founding team Senior AI Engineer role. Recruiting an engineer who has handled embedding drift in production justifies market-rate compensation. They will drive technical architecture and lead hires.
 
-🔱 RANK #4 DEFENSE PREP: Aarav Agarwal (CAND_0077337)
-  Current Role: Staff Machine Learning Engineer @ Paytm (YOE: 7.0 yrs)
+🔱 RANK #6 DEFENSE PREP: Anjali Kapoor (CAND_0058688)
+  Current Role: AI Engineer @ Vedantu (YOE: 6.7 yrs)
   Objections & Defense Strategy:
-    • Objection : Expected salary is high (up to 51.3 LPA).
+    • Objection : Expected salary is high (up to 55.3 LPA).
       Defense   : This is a founding team Senior AI Engineer role. Recruiting an engineer who has handled embedding drift in production justifies market-rate compensation. They will drive technical architecture and lead hires.
 
-🔱 RANK #5 DEFENSE PREP: Mira Ghosh (CAND_0005260)
-  Current Role: Senior NLP Engineer @ Netflix (YOE: 5.2 yrs)
+🔱 RANK #7 DEFENSE PREP: Advaith Pillai (CAND_0061257)
+  Current Role: Staff Machine Learning Engineer @ LinkedIn (YOE: 8.0 yrs)
   Objections & Defense Strategy:
-    • Objection : Expected salary is high (up to 64.9 LPA).
+    • Objection : Expected salary is high (up to 52.3 LPA).
       Defense   : This is a founding team Senior AI Engineer role. Recruiting an engineer who has handled embedding drift in production justifies market-rate compensation. They will drive technical architecture and lead hires.
 
-🔱 RANK #6 DEFENSE PREP: Krishna Subramanian (CAND_0081852)
-  Current Role: Senior Data Scientist @ Mad Street Den (YOE: 5.9 yrs)
-  Objections & Defense Strategy:
-    • Objection : Expected salary is high (up to 57.3 LPA).
-      Defense   : This is a founding team Senior AI Engineer role. Recruiting an engineer who has handled embedding drift in production justifies market-rate compensation. They will drive technical architecture and lead hires.
-
-🔱 RANK #7 DEFENSE PREP: Aditya Pillai (CAND_0094759)
-  Current Role: Lead AI Engineer @ Meta (YOE: 8.6 yrs)
-  Objections & Defense Strategy:
-    • Objection : Expected salary is high (up to 61.7 LPA).
-      Defense   : This is a founding team Senior AI Engineer role. Recruiting an engineer who has handled embedding drift in production justifies market-rate compensation. They will drive technical architecture and lead hires.
-
-🔱 RANK #8 DEFENSE PREP: Krishna Mittal (CAND_0068811)
-  Current Role: Applied ML Engineer @ Freshworks (YOE: 8.0 yrs)
+🔱 RANK #8 DEFENSE PREP: Aisha Kapoor (CAND_0060054)
+  Current Role: AI Engineer @ Mad Street Den (YOE: 6.4 yrs)
   • Status: Flawless fit. No significant risks or objections detected.
 
-🔱 RANK #9 DEFENSE PREP: Rahul Mukherjee (CAND_0006418)
-  Current Role: Machine Learning Engineer @ Verloop.io (YOE: 5.7 yrs)
+🔱 RANK #9 DEFENSE PREP: Advik Mehta (CAND_0097176)
+  Current Role: ML Engineer @ TCS (YOE: 5.9 yrs)
   Objections & Defense Strategy:
-    • Objection : Expected salary is high (up to 62.9 LPA).
+    • Objection : Candidate career history contains consulting/IT services companies.
+      Defense   : Although they worked in services, they also have substantial product engineering exposure (like at TCS). Our Guard Gate checked and verified that they possess deep, non-wrapping custom ML contributions.
+    • Objection : Expected salary is high (up to 49.8 LPA).
       Defense   : This is a founding team Senior AI Engineer role. Recruiting an engineer who has handled embedding drift in production justifies market-rate compensation. They will drive technical architecture and lead hires.
 
-🔱 RANK #10 DEFENSE PREP: Vivaan Arora (CAND_0051004)
-  Current Role: Senior Data Scientist @ CRED (YOE: 4.7 yrs)
-  Objections & Defense Strategy:
-    • Objection : Stated experience (4.7 yrs) is under the 5-year soft threshold.
-      Defense   : Their career history is pure product development (no services). They have shipped vector search and managed indices at scale in a fast-paced environment. They demonstrate 'senior judgment' and shipping capability, representing a strong candidate fit despite the slightly lower tenure.
+🔱 RANK #10 DEFENSE PREP: Pranav Sharma (CAND_0043860)
+  Current Role: Junior ML Engineer @ Aganitha (YOE: 6.1 yrs)
+  • Status: Flawless fit. No significant risks or objections detected.

@@ -208,9 +208,39 @@ def run_pipeline(
     
     # Build per-dimension rank positions
     dimension_ranks = build_dimension_ranks(scored_candidates)
-    
-    # Fuse using RRF
-    raw_fused_ranking = reciprocal_rank_fusion(dimension_ranks, k=k)
+
+    # Check if trained LTR model exists
+    model_path = os.path.join(os.path.dirname(__file__), "..", "eval", "ltr_model.pkl")
+    if os.path.exists(model_path):
+        print("  ▸ Stage 3: Learning-to-Rank (LTR) Machine Learning Fusion...")
+        import pickle
+        import numpy as np
+        
+        with open(model_path, "rb") as f:
+            model = pickle.load(f)
+            
+        # Extract features for prediction
+        X_test = []
+        cids = []
+        for sc in scored_candidates:
+            cid = sc["candidate_id"]
+            gg = guard_results[cid]
+            features = [
+                sc.get("skill_relevance_score", 0.0),
+                sc.get("career_score", 0.0),
+                sc.get("behavioral_score", 0.0),
+                gg.get("trust_score", 0.0),
+                sc.get("semantic_score", 0.0),
+            ]
+            X_test.append(features)
+            cids.append(cid)
+            
+        preds = model.predict(np.array(X_test))
+        raw_fused_ranking = list(zip(cids, preds))
+        print("    🤖 LTR Model inference complete.")
+    else:
+        # Fuse using RRF
+        raw_fused_ranking = reciprocal_rank_fusion(dimension_ranks, k=k)
     
     # Apply Trust Grade multipliers to align with oracle's strict behavioral demotions
     fused_ranking = []
