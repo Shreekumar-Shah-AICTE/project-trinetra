@@ -141,9 +141,10 @@ project-trinetra/
 *   **Memory Footprint**: Streams data line-by-line using generators to remain under 512MB RAM during loading (easily fits inside a 16GB sandboxed environment).
 *   **Real-world Benchmark**:
     *   *Total candidate pool*: 100,000 candidates
-    *   *Execution time*: **121 seconds** (~2.0 minutes) on full 100K JSONL validation
-    *   *Honeypot detection*: 460 hard honeypots (0 in top 100)
-    *   *Disqualified pool*: ~40,000 non-AI/non-engineering profiles
+    *   *Execution time*: **140 seconds** (~2.3 minutes) on full 100K JSONL validation
+    *   *Honeypot detection*: **9,556 hard honeypots** (0% leakage, 0 in top 100)
+    *   *Disqualified pool*: **79,276 non-AI/non-engineering profiles**
+    *   *Master Validation*: **0.8440 Composite Score** (NDCG@10 = **0.9647**, P@10 = **1.0000**)
 
 ---
 
