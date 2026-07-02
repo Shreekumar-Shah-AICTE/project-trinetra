@@ -261,9 +261,12 @@ def check_keyword_stuffer(candidate: dict) -> dict:
     # Check if career descriptions mention AI/ML work
     import re
     ai_career_patterns = [
-        r'\bmachine learning\b', r'\bartificial intelligence\b', r'\bml\b', 
-        r'\bnlp\b', r'\bdeep learning\b', r'\bembedding\b', r'\bretrieval\b', 
-        r'\bsearch\b', r'\branking\b', r'\bdata science\b', r'\b(?:^|\s)ai(?:\s|$|\b)',
+        r'\bmachine learning\b', r'\bartificial intelligence\b', 
+        r'\bnlp\b', r'\bdeep learning\b', r'\bembeddings?\b', 
+        r'\bvector search\b', r'\bsemantic search\b', r'\bhybrid search\b',
+        r'\binformation retrieval\b', r'\branking systems?\b', r'\bdata science\b',
+        r'\bllms?\b', r'\blarge language models?\b',
+        r'\bpytorch\b', r'\btensorflow\b', r'\btransformers?\b',
     ]
     for job in career:
         desc = job.get("description", "").lower()
@@ -477,9 +480,23 @@ def run_guard_gate(candidate: dict) -> dict:
                         break
             if has_time_travel_fraud:
                 break
+                
+    # Check for impossible skill durations exceeding total YOE (Honeypot Filter)
+    has_skill_duration_fraud = False
+    max_skill_months = 0
+    for skill in candidate.get("skills", []):
+        claimed_months = skill.get("duration_months", 0)
+        if claimed_months > max_skill_months:
+            max_skill_months = claimed_months
+            
+    if max_skill_months / 12.0 > yoe + 1.0 and yoe > 0:
+        has_skill_duration_fraud = True
             
     if has_time_travel_fraud:
         all_violations.append("Honeypot: Candidate claims experience with a technology before its public release date.")
+        
+    if has_skill_duration_fraud:
+        all_violations.append(f"Honeypot: A claimed skill duration ({max_skill_months} months) exceeds the total stated years of experience ({yoe} years).")
         
     if is_expert_fraud:
         all_violations.append("Honeypot: Expert-level claims in 10+ skills with 0 months usage.")
@@ -495,6 +512,7 @@ def run_guard_gate(candidate: dict) -> dict:
         or is_expert_fraud
         or has_tenure_fraud
         or has_edu_fraud
+        or has_skill_duration_fraud
         or len(chrono_violations) >= 3
         or (company_info["has_fictional"] and len(chrono_violations) >= 1)
     )
@@ -548,15 +566,30 @@ def run_guard_gate(candidate: dict) -> dict:
     # B. Notice period penalties
     notice_days = signals.get("notice_period_days", 0)
     if notice_days > 30:
-        if notice_days > 60:
-            trust_score -= 0.30
+        if notice_days >= 60:
+            trust_score -= 0.45  # Stricter penalty for 60+ days notice
         else:
-            trust_score -= 0.15
+            trust_score -= 0.20
             
-    # C. Recruiter response rate < 10%
+    # C. Recruiter response rate penalties (stricter range check)
     response_rate = signals.get("recruiter_response_rate")
-    if response_rate is not None and response_rate < 0.10:
-        trust_score -= 0.15
+    if response_rate is not None:
+        if response_rate < 0.15:
+            trust_score -= 0.40  # Stricter penalty for ghost response rate < 15%
+        elif response_rate < 0.30:
+            trust_score -= 0.20
+        elif response_rate < 0.50:
+            trust_score -= 0.10
+            
+    # C2. Recruiter response time penalties (new check!)
+    response_time = signals.get("avg_response_time_hours")
+    if response_time is not None:
+        if response_time > 120:  # > 5 days
+            trust_score -= 0.40
+        elif response_time > 72:  # > 3 days
+            trust_score -= 0.20
+        elif response_time > 48:  # > 2 days
+            trust_score -= 0.10
         
     # D. Not open to work + low engagement
     if not signals.get("open_to_work_flag", True) and response_rate is not None and response_rate < 0.50:
@@ -594,6 +627,33 @@ def run_guard_gate(candidate: dict) -> dict:
     
     if (is_hands_off_manager or is_pure_architect) and not has_hands_on_proof:
         trust_score -= 0.35  # Severe penalty pushing them down to C/D Grade
+        
+    # I. Computer Vision / Speech Domain Penalty
+    CV_SPEECH_SKILLS = {"opencv", "yolo", "resnet", "cnn", "computer vision", "image processing", "object detection", "speech recognition", "speech synthesis", "text to speech", "tts", "deep speech", "kaldi", "whisper", "audio processing", "image moderation", "segmentation", "unet", "mask r-cnn", "pointnet"}
+    NLP_IR_SKILLS = {"nlp", "natural language", "vector search", "semantic search", "hybrid search", "information retrieval", "rag", "embeddings", "faiss", "pinecone", "milvus", "qdrant", "weaviate", "elasticsearch", "opensearch", "bm25", "retrieval", "ranking", "search engine", "llm", "large language model", "llama", "transformers", "bert", "gpt", "spacy", "nltk", "huggingface"}
+    
+    cv_speech_duration = 0
+    nlp_ir_duration = 0
+    for skill in candidate.get("skills", []):
+        name = skill.get("name", "").lower()
+        dur = skill.get("duration_months", 0)
+        if any(kw in name for kw in CV_SPEECH_SKILLS):
+            cv_speech_duration += dur
+        if any(kw in name for kw in NLP_IR_SKILLS):
+            nlp_ir_duration += dur
+            
+    # Check if candidate has CV/Speech focus in career history
+    has_cv_career = False
+    for job in career_history:
+        desc = (job.get("description", "") + " " + job.get("title", "")).lower()
+        if any(kw in desc for kw in ["computer vision", "image processing", "object detection", "yolo", "speech recognition", "speech synthesis"]):
+            has_cv_career = True
+            break
+            
+    if (cv_speech_duration > 0 or has_cv_career):
+        # CV/Speech heavily outweighs NLP/IR
+        if cv_speech_duration > 2.5 * nlp_ir_duration or (has_cv_career and nlp_ir_duration == 0):
+            trust_score -= 0.35  # Pushes candidate down to C/D Grade
     
     trust_score = max(0.0, min(1.0, trust_score))
     
@@ -619,19 +679,20 @@ def run_guard_gate(candidate: dict) -> dict:
     profile = candidate.get("profile", {})
     headline = profile.get("headline", "").lower()
     
-    # 1. Non-AI headline with no AI career = not a fit for this role
-    if stuffer_info["non_ai_headline"] and not stuffer_info["has_ai_career"]:
+    # 1. Non-AI headline = not a fit for this founding engineer role
+    if stuffer_info["non_ai_headline"]:
         disqualified = True
-        disqualify_reason = f"Non-AI domain: '{profile.get('headline', '')}'"
+        disqualify_reason = f"Disqualified title/headline domain: '{profile.get('headline', '')}'"
     
     # 2. CV/Speech/Robotics only (check headline + career)
-    is_cv_robotics_only = any(pat in headline for pat in CV_SPEECH_ROBOTICS_ONLY)
+    is_cv_robotics_only = any(pat in headline for pat in CV_SPEECH_ROBOTICS_ONLY) or (has_cv_career and nlp_ir_duration == 0)
     if is_cv_robotics_only:
         # Check if they ALSO have NLP/IR experience
         has_nlp = False
+        nlp_keywords = ["nlp", "natural language", "vector search", "semantic search", "information retrieval", "text classification", "llm", "llama", "transformers", "bert", "gpt", "rag"]
         for job in candidate.get("career_history", []):
             desc = (job.get("description", "") + " " + job.get("title", "")).lower()
-            if any(kw in desc for kw in ["nlp", "natural language", "retrieval", "search", "ranking", "text"]):
+            if any(kw in desc for kw in nlp_keywords):
                 has_nlp = True
                 break
         if not has_nlp:
