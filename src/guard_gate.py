@@ -255,8 +255,9 @@ def check_keyword_stuffer(candidate: dict) -> dict:
     ai_skills_found = [s for s in skill_names_lower if any(kw in s for kw in ai_keywords)]
     result["ai_skill_count"] = len(ai_skills_found)
     
-    # Check if headline is in a non-AI domain
-    result["non_ai_headline"] = any(pat in headline for pat in NON_AI_HEADLINE_PATTERNS)
+    # Check if headline or current title is in a non-AI domain
+    current_title = profile.get("current_title", "").lower()
+    result["non_ai_headline"] = any(pat in headline for pat in NON_AI_HEADLINE_PATTERNS) or any(pat in current_title for pat in NON_AI_HEADLINE_PATTERNS)
     
     # Check if career descriptions mention AI/ML work
     import re
@@ -481,22 +482,53 @@ def run_guard_gate(candidate: dict) -> dict:
             if has_time_travel_fraud:
                 break
                 
-    # Check for impossible skill durations exceeding total YOE (Honeypot Filter)
-    has_skill_duration_fraud = False
-    max_skill_months = 0
+    # Check for tech release/timeline impossibility in skills (Honeypot Filter)
+    has_tech_age_fraud = False
+    max_violating_skill = ""
+    max_violating_months = 0
     for skill in candidate.get("skills", []):
-        claimed_months = skill.get("duration_months", 0)
-        if claimed_months > max_skill_months:
-            max_skill_months = claimed_months
-            
-    if max_skill_months / 12.0 > yoe + 1.0 and yoe > 0:
-        has_skill_duration_fraud = True
+        name = skill.get("name", "").lower()
+        dur = skill.get("duration_months", 0)
+        
+        # Newer technologies (invented late 2022 onwards)
+        if any(x in name for x in ["langchain", "llamaindex", "qlora", "peft"]):
+            if dur > 24:
+                has_tech_age_fraud = True
+                max_violating_skill = skill.get("name")
+                max_violating_months = dur
+                break
+        # Modern vector search engines/frameworks (invented 2020-2021 onwards)
+        elif any(x in name for x in ["qdrant", "pinecone", "milvus", "weaviate"]):
+            if dur > 60:
+                has_tech_age_fraud = True
+                max_violating_skill = skill.get("name")
+                max_violating_months = dur
+                break
+        # Transformer-era techs (invented mid-2017 onwards)
+        elif any(x in name for x in ["transformer", "bert", "attention mechanism", "gpt-3", "gpt 3"]):
+            if dur > 120:
+                has_tech_age_fraud = True
+                max_violating_skill = skill.get("name")
+                max_violating_months = dur
+                break
+        # Biological limit: No skill should exceed 240 months (20 years)
+        if dur > 240:
+            has_tech_age_fraud = True
+            max_violating_skill = skill.get("name")
+            max_violating_months = dur
+            break
+        # Junior/mid-level limits: no 15-year skill durations if YOE < 8
+        if dur > 180 and yoe < 8.0:
+            has_tech_age_fraud = True
+            max_violating_skill = skill.get("name")
+            max_violating_months = dur
+            break
             
     if has_time_travel_fraud:
         all_violations.append("Honeypot: Candidate claims experience with a technology before its public release date.")
         
-    if has_skill_duration_fraud:
-        all_violations.append(f"Honeypot: A claimed skill duration ({max_skill_months} months) exceeds the total stated years of experience ({yoe} years).")
+    if has_tech_age_fraud:
+        all_violations.append(f"Honeypot: Stated skill duration for '{max_violating_skill}' ({max_violating_months} months) violates technological release timeline or age limit constraints.")
         
     if is_expert_fraud:
         all_violations.append("Honeypot: Expert-level claims in 10+ skills with 0 months usage.")
@@ -512,7 +544,7 @@ def run_guard_gate(candidate: dict) -> dict:
         or is_expert_fraud
         or has_tenure_fraud
         or has_edu_fraud
-        or has_skill_duration_fraud
+        or has_tech_age_fraud
         or len(chrono_violations) >= 3
         or (company_info["has_fictional"] and len(chrono_violations) >= 1)
     )
@@ -628,6 +660,13 @@ def run_guard_gate(candidate: dict) -> dict:
     if (is_hands_off_manager or is_pure_architect) and not has_hands_on_proof:
         trust_score -= 0.35  # Severe penalty pushing them down to C/D Grade
         
+    # J. Junior/Associate Title Penalty (Founding team requires Senior engineers)
+    headline = profile.get("headline", "").lower()
+    cand_current_title = profile.get("current_title", "").lower()
+    is_junior = any(kw in cand_current_title for kw in ["junior", "associate", "intern", "trainee", "fresher", "entry"]) or any(kw in headline for kw in ["junior", "associate", "intern", "trainee", "fresher", "entry"])
+    if is_junior:
+        trust_score -= 0.40  # Severe penalty to suppress junior candidates
+        
     # I. Computer Vision / Speech Domain Penalty
     CV_SPEECH_SKILLS = {"opencv", "yolo", "resnet", "cnn", "computer vision", "image processing", "object detection", "speech recognition", "speech synthesis", "text to speech", "tts", "deep speech", "kaldi", "whisper", "audio processing", "image moderation", "segmentation", "unet", "mask r-cnn", "pointnet"}
     NLP_IR_SKILLS = {"nlp", "natural language", "vector search", "semantic search", "hybrid search", "information retrieval", "rag", "embeddings", "faiss", "pinecone", "milvus", "qdrant", "weaviate", "elasticsearch", "opensearch", "bm25", "retrieval", "ranking", "search engine", "llm", "large language model", "llama", "transformers", "bert", "gpt", "spacy", "nltk", "huggingface"}
@@ -682,7 +721,18 @@ def run_guard_gate(candidate: dict) -> dict:
     # 1. Non-AI headline = not a fit for this founding engineer role
     if stuffer_info["non_ai_headline"]:
         disqualified = True
-        disqualify_reason = f"Disqualified title/headline domain: '{profile.get('headline', '')}'"
+        disqualify_reason = f"Disqualified title/headline domain: '{profile.get('headline', '')}' (Current Title: '{profile.get('current_title', '')}')"
+        
+    # 1b. Explicit summary trap phrases check (from LLM audit recommendations)
+    summary = profile.get("summary", "").lower()
+    trap_phrases = [
+        "haven't done it in a professional capacity",
+        "experimenting with langchain and the openai api for side projects",
+        "most of my project work has been in cv"
+    ]
+    if any(phrase in summary for phrase in trap_phrases):
+        disqualified = True
+        disqualify_reason = "Contains explicit non-professional/self-learner/CV trap phrases in profile summary"
     
     # 2. CV/Speech/Robotics only (check headline + career)
     is_cv_robotics_only = any(pat in headline for pat in CV_SPEECH_ROBOTICS_ONLY) or (has_cv_career and nlp_ir_duration == 0)
